@@ -8,13 +8,13 @@ export function Workflow() {
     <section id="process" className="relative py-24 sm:py-32">
       <div className="container-x">
         <SectionHeading
-          eyebrow="Процесс"
+          eyebrow="Экспонат 04 — Процесс"
           title={
             <>
-              Прозрачный процесс — <span className="text-gradient">без сюрпризов</span>
+              Работа как в <span className="text-gradient">хорошем сервисе</span>
             </>
           }
-          subtitle="Вы всегда знаете, на каком этапе проект и что будет дальше. Никаких «пропал и не отвечает» — только чёткие шаги и контроль сроков."
+          subtitle="Вы всегда знаете, на каком этапе проект и что будет дальше. Никаких «пропал и не отвечает» — только чёткие шаги, демо на каждом этапе и контроль сроков."
         />
 
         <div className="relative mt-20">
@@ -34,8 +34,8 @@ export function Workflow() {
                 <div className="relative z-10 flex-shrink-0">
                   <div
                     className="grid h-14 w-14 place-items-center rounded-2xl border border-brand-violet/30
-                      bg-cream-50 font-mono text-lg font-bold text-brand-indigo shadow-glow-sm
-                      dark:bg-ink-900 dark:text-brand-violet"
+                      bg-cream-50 font-mono text-lg font-bold text-brand-indigo shadow-glow-sm backdrop-blur-md
+                      dark:border-white/10 dark:bg-white/[0.04] dark:text-brand-violet"
                   >
                     {step.num}
                   </div>
@@ -60,7 +60,7 @@ export function Workflow() {
 
         {/* Гарантия-плашка */}
         <Reveal delay={0.1}>
-          <div className="mt-16 flex flex-col items-center gap-4 rounded-2xl border border-slate-200/80 bg-white/60 p-6 text-center dark:border-ink-700/60 dark:bg-ink-800/40 sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
+          <div className="panel mt-16 flex flex-col items-center gap-4 rounded-2xl p-6 text-center sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
             <p className="text-sm text-slate-600 dark:text-slate-300">
               <span className="font-semibold text-ink-900 dark:text-white">Фиксирую сроки и объём работ</span>{' '}
               на старте. Вы получаете результат, а не отговорки.

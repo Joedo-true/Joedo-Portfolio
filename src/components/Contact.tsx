@@ -90,7 +90,7 @@ export function Contact() {
       <div className="container-x relative">
         <div className="mx-auto max-w-2xl text-center">
           <Reveal>
-            <span className="eyebrow">Контакты</span>
+            <span className="eyebrow">Экспонат 05 — Контакты</span>
           </Reveal>
           <Reveal delay={0.05}>
             <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight text-ink-950 dark:text-white sm:text-4xl md:text-[2.75rem]">
@@ -99,7 +99,8 @@ export function Contact() {
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600 dark:text-slate-300">
-              Опишите задачу в двух словах — вернусь с идеями и оценкой в течение дня.
+              Опишите задачу в двух словах — вернусь с идеями, планом и оценкой в течение 24 часов. Это
+              бесплатно и ни к чему не обязывает.
             </p>
           </Reveal>
         </div>
@@ -107,10 +108,7 @@ export function Contact() {
         <div className="mx-auto mt-14 grid max-w-5xl gap-8 lg:grid-cols-[1.2fr_1fr]">
           {/* Форма */}
           <Reveal>
-            <form
-              onSubmit={handleSubmit}
-              className="rounded-2xl border border-slate-200/80 bg-white/70 p-6 shadow-card dark:border-ink-700/70 dark:bg-ink-800/50 sm:p-8"
-            >
+            <form onSubmit={handleSubmit} className="panel rounded-3xl p-6 sm:p-8">
               <div className="space-y-5">
                 <Field id="name" label="Ваше имя" placeholder="Как к вам обращаться" value={name} onChange={setName} required />
                 <Field
@@ -147,7 +145,7 @@ export function Contact() {
 
           {/* Альтернатива — мессенджеры в один клик */}
           <Reveal delay={0.1}>
-            <div className="flex h-full flex-col justify-center gap-4 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white/70 to-cream-100 p-6 dark:border-ink-700/70 dark:from-ink-800/50 dark:to-ink-900/50 sm:p-8">
+            <div className="panel flex h-full flex-col justify-center gap-4 rounded-3xl p-6 sm:p-8">
               <p className="text-lg font-semibold text-ink-900 dark:text-white">
                 Предпочитаете мессенджеры?
               </p>

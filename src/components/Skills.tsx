@@ -14,8 +14,8 @@ function SkillTile({ skill }: { skill: Skill }) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         className="group relative flex aspect-[4/3] cursor-default flex-col items-center justify-center gap-2.5
-          rounded-2xl border border-slate-200/80 bg-white/60 p-4 transition-all duration-300
-          dark:border-ink-700/60 dark:bg-ink-800/50"
+          overflow-hidden rounded-2xl border border-slate-200/80 bg-white/60 p-4 backdrop-blur-md transition-all duration-300
+          dark:border-white/10 dark:bg-white/[0.03]"
         style={{
           borderColor: hover ? skill.color : undefined,
           boxShadow: hover ? `0 16px 40px -18px ${skill.color}` : undefined,
@@ -52,13 +52,13 @@ export function Skills() {
 
       <div className="container-x relative">
         <SectionHeading
-          eyebrow="Стек"
+          eyebrow="Экспонат 03 — Стек"
           title={
             <>
-              Инженерный <span className="text-gradient">арсенал</span>
+              Инструменты, проверенные <span className="text-gradient">в бою</span>
             </>
           }
-          subtitle="Современные и надёжные инструменты, сгруппированные по назначению — так видно системность подхода к разработке."
+          subtitle="Только современный и надёжный стек, сгруппированный по назначению — так видно системность подхода. Наведите на плитку."
         />
 
         <div className="mt-16 space-y-12">

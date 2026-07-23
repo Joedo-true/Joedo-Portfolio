@@ -187,13 +187,13 @@ export function Projects() {
     <section id="projects" className="relative overflow-hidden py-24 sm:py-32">
       <div className="container-x">
         <SectionHeading
-          eyebrow="Проекты"
+          eyebrow="Экспонат 02 — Кейсы"
           title={
             <>
-              Кейсы, которые <span className="text-gradient">решают задачи бизнеса</span>
+              Не портфолио, а <span className="text-gradient">доказательства</span>
             </>
           }
-          subtitle="Три проекта, оформленных как бизнес-кейсы: от проблемы клиента — до работающего интерфейса. Каждый макет ниже — живой и интерактивный, попробуйте покликать."
+          subtitle="Три проекта разобраны как бизнес-кейсы: боль клиента → что построено → результат. Каждый макет ниже — живой и интерактивный, попробуйте покликать прямо здесь."
         />
 
         <div className="mt-20 space-y-24 sm:space-y-32">
