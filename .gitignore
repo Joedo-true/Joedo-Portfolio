@@ -1,0 +1,33 @@
+# Зависимости
+node_modules
+.pnp
+.pnp.js
+
+# Сборка
+dist
+dist-ssr
+*.local
+
+# Логи
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Редакторы / ОС
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Кэш и артефакты сборки TypeScript
+.eslintcache
+node_modules/.vite
+*.tsbuildinfo
