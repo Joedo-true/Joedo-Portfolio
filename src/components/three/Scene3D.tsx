@@ -35,7 +35,7 @@ function AccentSolid({
     mesh.current.rotation.y += delta * 0.55;
   });
   return (
-    <Float speed={2.2} rotationIntensity={0.6} floatIntensity={1.4}>
+    <Float speed={2.2} rotationIntensity={0.6} floatIntensity={1}>
       <mesh ref={mesh} position={position} scale={scale}>
         {geo === 'octa' && <octahedronGeometry args={[0.5, 0]} />}
         {geo === 'tetra' && <tetrahedronGeometry args={[0.55, 0]} />}
@@ -94,15 +94,15 @@ function Crystal({ pointer }: { pointer: React.MutableRefObject<{ x: number; y: 
 
       {/* Каркас-«клетка» — техно-оболочка */}
       <mesh ref={cage} scale={1.001}>
-        <icosahedronGeometry args={[2.35, 1]} />
+        <icosahedronGeometry args={[2.05, 1]} />
         <meshBasicMaterial color="#8B5CF6" wireframe transparent opacity={0.22} />
       </mesh>
 
-      {/* Плавающие акцентные фигуры */}
-      <AccentSolid position={[2.9, 1.3, -1]} color="#22D3EE" geo="octa" />
-      <AccentSolid position={[-3.1, -1.1, -0.5]} color="#D946EF" geo="tetra" scale={1.1} />
-      <AccentSolid position={[2.4, -1.9, 0.5]} color="#8B5CF6" geo="torus" scale={0.9} />
-      <AccentSolid position={[-2.6, 1.9, -1.5]} color="#6366F1" geo="box" scale={0.7} />
+      {/* Плавающие акцентные фигуры — в пределах кадра, чтобы не обрезались */}
+      <AccentSolid position={[2.35, 1.15, -1]} color="#22D3EE" geo="octa" />
+      <AccentSolid position={[-2.4, -1, -0.5]} color="#D946EF" geo="tetra" scale={1.05} />
+      <AccentSolid position={[2.0, -1.55, 0.5]} color="#8B5CF6" geo="torus" scale={0.85} />
+      <AccentSolid position={[-2.15, 1.5, -1.5]} color="#6366F1" geo="box" scale={0.65} />
     </group>
   );
 }
@@ -112,7 +112,7 @@ export default function Scene3D() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 6.2], fov: 42 }}
+      camera={{ position: [0, 0, 7.4], fov: 42 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       style={{ pointerEvents: 'none' }}
     >
