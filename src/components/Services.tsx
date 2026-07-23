@@ -21,7 +21,7 @@ export function Services() {
         <RevealGroup className="mt-16 grid gap-5 sm:grid-cols-2" stagger={0.1}>
           {services.map((s) => (
             <motion.div key={s.id} variants={revealChild}>
-              <TiltCard className="panel h-full rounded-3xl p-7 sm:p-8">
+              <TiltCard className="panel h-full overflow-hidden rounded-3xl p-7 sm:p-8">
                 {/* Свечение акцента */}
                 <div
                   className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"

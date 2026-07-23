@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 /**
@@ -17,6 +17,7 @@ export function TiltCard({
   glare?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState(false);
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
 
@@ -40,7 +41,15 @@ export function TiltCard({
   };
 
   return (
-    <div className="perspective" onMouseMove={onMove} onMouseLeave={reset}>
+    <div
+      className="perspective"
+      onMouseMove={onMove}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        reset();
+      }}
+    >
       <motion.div
         ref={ref}
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
@@ -51,7 +60,9 @@ export function TiltCard({
           <motion.div
             aria-hidden
             className="pointer-events-none absolute inset-0 rounded-[inherit]"
-            style={{ background: glareBg }}
+            style={{ background: glareBg, opacity: 0 }}
+            animate={{ opacity: hover ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
           />
         )}
       </motion.div>
