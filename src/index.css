@@ -104,6 +104,21 @@
     z-index: -1;
   }
 
+  /* Слой единого «прожектора» внутри карточки (координаты задаёт SpotlightGroup).
+     Виден только на самой карточке (родитель — overflow-hidden), в промежутках нет. */
+  .spotlight-layer {
+    background: radial-gradient(
+      240px circle at var(--sx, -300px) var(--sy, -300px),
+      rgba(255, 255, 255, 0.1),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  [data-active='true'] .spotlight-layer {
+    opacity: 1;
+  }
+
   /* Метка-«пилюля» над блоками (тег экспоната) */
   .eyebrow {
     @apply inline-flex items-center gap-2 rounded-full border border-brand-violet/25 bg-brand-violet/10

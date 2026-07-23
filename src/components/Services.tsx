@@ -3,6 +3,7 @@ import { services } from '../data/services';
 import { SectionHeading } from './ui/SectionHeading';
 import { RevealGroup, revealChild } from './ui/Reveal';
 import { TiltCard } from './ui/TiltCard';
+import { SpotlightGroup } from './ui/SpotlightGroup';
 
 export function Services() {
   return (
@@ -18,15 +19,18 @@ export function Services() {
           subtitle="Не «сайт ради сайта», а инструмент под вашу бизнес-задачу. Выберите формат — остальное беру на себя: от структуры до деплоя."
         />
 
-        <RevealGroup className="mt-16 grid gap-5 sm:grid-cols-2" stagger={0.1}>
-          {services.map((s) => (
-            <motion.div key={s.id} variants={revealChild}>
-              <TiltCard className="panel h-full overflow-hidden rounded-3xl p-7 sm:p-8">
-                {/* Свечение акцента */}
-                <div
-                  className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
-                  style={{ background: `radial-gradient(circle, ${s.accent}, transparent 70%)` }}
-                />
+        <SpotlightGroup>
+          <RevealGroup className="mt-16 grid gap-5 sm:grid-cols-2" stagger={0.1}>
+            {services.map((s) => (
+              <motion.div key={s.id} variants={revealChild}>
+                <TiltCard glare={false} className="panel h-full overflow-hidden rounded-3xl p-7 sm:p-8">
+                  {/* Единый прожектор на всю сетку — виден только в пределах карточки */}
+                  <div data-spotlight className="spotlight-layer pointer-events-none absolute inset-0 rounded-[inherit]" />
+                  {/* Свечение акцента */}
+                  <div
+                    className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
+                    style={{ background: `radial-gradient(circle, ${s.accent}, transparent 70%)` }}
+                  />
 
                 <div className="relative flex items-start justify-between gap-4">
                   <div
@@ -61,10 +65,11 @@ export function Services() {
                     </span>
                   ))}
                 </div>
-              </TiltCard>
-            </motion.div>
-          ))}
-        </RevealGroup>
+                </TiltCard>
+              </motion.div>
+            ))}
+          </RevealGroup>
+        </SpotlightGroup>
 
         {/* Нижняя CTA-полоса */}
         <motion.div
