@@ -35,7 +35,7 @@ function AccentSolid({
     mesh.current.rotation.y += delta * 0.55;
   });
   return (
-    <Float speed={2.2} rotationIntensity={0.5} floatIntensity={0.8}>
+    <Float speed={2.2} rotationIntensity={0.6} floatIntensity={1}>
       <mesh ref={mesh} position={position} scale={scale}>
         {geo === 'octa' && <octahedronGeometry args={[0.5, 0]} />}
         {geo === 'tetra' && <tetrahedronGeometry args={[0.55, 0]} />}
@@ -94,15 +94,15 @@ function Crystal({ pointer }: { pointer: React.MutableRefObject<{ x: number; y: 
 
       {/* Каркас-«клетка» — техно-оболочка */}
       <mesh ref={cage} scale={1.001}>
-        <icosahedronGeometry args={[1.95, 1]} />
+        <icosahedronGeometry args={[2.05, 1]} />
         <meshBasicMaterial color="#8B5CF6" wireframe transparent opacity={0.22} />
       </mesh>
 
-      {/* Плавающие акцентные фигуры — с запасом до краёв кадра (любой аспект) */}
-      <AccentSolid position={[2.15, 1.0, -1]} color="#22D3EE" geo="octa" />
-      <AccentSolid position={[-2.2, -0.95, -0.5]} color="#D946EF" geo="tetra" scale={1.0} />
-      <AccentSolid position={[1.9, -1.5, 0.5]} color="#8B5CF6" geo="torus" scale={0.82} />
-      <AccentSolid position={[-2.0, 1.45, -1.5]} color="#6366F1" geo="box" scale={0.62} />
+      {/* Плавающие акцентные фигуры */}
+      <AccentSolid position={[2.35, 1.15, -1]} color="#22D3EE" geo="octa" />
+      <AccentSolid position={[-2.4, -1, -0.5]} color="#D946EF" geo="tetra" scale={1.05} />
+      <AccentSolid position={[2.0, -1.55, 0.5]} color="#8B5CF6" geo="torus" scale={0.85} />
+      <AccentSolid position={[-2.15, 1.5, -1.5]} color="#6366F1" geo="box" scale={0.65} />
     </group>
   );
 }
@@ -112,9 +112,15 @@ export default function Scene3D() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 8.6], fov: 42 }}
+      camera={{ position: [0, 0, 7.4], fov: 42 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-      style={{ pointerEvents: 'none' }}
+      style={{
+        pointerEvents: 'none',
+        // Мягкое затухание у боковых краёв канваса: фигуры, дошедшие до
+        // границы, плавно растворяются, а не обрезаются жёстким прямоугольником.
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
+        maskImage: 'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
+      }}
     >
       <ambientLight intensity={0.65} />
       <directionalLight position={[5, 6, 5]} intensity={1.1} />
