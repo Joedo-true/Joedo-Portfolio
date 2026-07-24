@@ -37,26 +37,57 @@ function Dendrite({ end, delay }: { end: THREE.Vector3; delay: number }) {
     const perp = new THREE.Vector3(-end.z, end.x, end.y).normalize().multiplyScalar(0.5);
     return m.add(perp);
   }, [end]);
+  const curve = useMemo(
+    () => new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0, 0), mid, end),
+    [mid, end],
+  );
   const ref = useRef<THREE.Object3D & { material?: THREE.Material & { opacity: number } }>(null);
+  const pulse = useRef<THREE.Mesh>(null);
   const start = useRef(performance.now());
+  const life = 1500; // мс на пробег импульса
+  const phase = (delay % life) / life;
+
   useFrame(() => {
+    const now = performance.now();
+    const el = now - start.current;
+    // Проявление линии
     const mat = ref.current?.material;
-    if (mat) {
-      const t = Math.min(1, Math.max(0, (performance.now() - start.current - delay) / 500));
-      mat.opacity = easeOut(t) * 0.4;
+    if (mat) mat.opacity = easeOut(Math.min(1, Math.max(0, (el - delay) / 500))) * 0.4;
+    // Импульс, бегущий от сомы к узлу
+    const p = pulse.current;
+    if (p && el > delay) {
+      const tt = (el / life + phase) % 1;
+      curve.getPoint(tt, p.position);
+      const glow = Math.min(1, tt * 6) * (1 - tt); // вспышка у центра → затухание к узлу
+      p.scale.setScalar(0.06 + glow * 0.14);
+      (p.material as THREE.MeshBasicMaterial).opacity = glow;
     }
   });
+
   return (
-    <QuadraticBezierLine
-      ref={ref as never}
-      start={[0, 0, 0]}
-      end={[end.x, end.y, end.z]}
-      mid={[mid.x, mid.y, mid.z]}
-      color={C.line}
-      lineWidth={1.1}
-      transparent
-      opacity={0}
-    />
+    <>
+      <QuadraticBezierLine
+        ref={ref as never}
+        start={[0, 0, 0]}
+        end={[end.x, end.y, end.z]}
+        mid={[mid.x, mid.y, mid.z]}
+        color={C.line}
+        lineWidth={1.1}
+        transparent
+        opacity={0}
+      />
+      <mesh ref={pulse}>
+        <sphereGeometry args={[1, 12, 12]} />
+        <meshBasicMaterial
+          color="#BDEBFF"
+          transparent
+          opacity={0}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </mesh>
+    </>
   );
 }
 
