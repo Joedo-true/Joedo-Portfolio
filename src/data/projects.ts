@@ -8,7 +8,10 @@ export interface Project {
   solution: string;
   stack: string[];
   metrics: { value: string; label: string }[];
+  /** 👉 ССЫЛКА НА ЖИВОЕ ДЕМО. Кнопка «Открыть живое демо» ведёт сюда.
+   *  Замените '#' на реальный URL сайта проекта, например 'https://autudash.vercel.app'. */
   demoUrl?: string;
+  /** Больше не используется (кнопка GitHub заменена на «Посмотреть структуру»). */
   codeUrl?: string;
   /** Тип встроенного макета интерфейса */
   mockup: 'dashboard' | 'shop' | 'calc';

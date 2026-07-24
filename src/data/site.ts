@@ -4,10 +4,10 @@ export const site = {
   name: 'Joedo',
   role: 'Фронтенд-разработчик на React',
   telegram: {
-    handle: '@joedo_dev',
-    url: 'https://t.me/joedo_dev',
+    handle: '@Joedotrue',
+    url: 'https://t.me/Joedotrue',
   },
-  email: 'hello@joedo.dev',
+  email: 'joedotrue12@gmail.com',
   github: {
     handle: 'joedo-true',
     url: 'https://github.com/joedo-true',
@@ -21,10 +21,10 @@ export const site = {
   ],
   // Плейсхолдеры — отредактируйте под свою реальную статистику
   stats: [
-    { to: 40, suffix: '+', label: 'проектов в продакшене' },
+    { to: 10, suffix: '+', label: 'проектов в продакшене' },
     { to: 96, suffix: '', label: 'средний балл PageSpeed' },
     { to: 2.4, prefix: '×', decimals: 1, label: 'рост заявок с сайта' },
-    { to: 5, suffix: '+', label: 'лет в коммерческой разработке' },
+    { to: 1, suffix: '+', label: 'год в коммерческой разработке' },
   ],
   marquee: [
     'React-интерфейсы',

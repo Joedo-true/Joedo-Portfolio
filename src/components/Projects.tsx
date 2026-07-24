@@ -1,8 +1,11 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
 import { projects, type Project } from '../data/projects';
 import { Reveal } from './ui/Reveal';
 import { SectionHeading } from './ui/SectionHeading';
+
+// Модал с 3D-структурой грузится лениво — код нейрона тянется только по клику.
+const StructureModal = lazy(() => import('./structure/StructureModal'));
 
 // Макеты грузятся лениво (в т.ч. тяжёлый Recharts) — hero рисуется мгновенно.
 const DashboardMockup = lazy(() =>
@@ -78,7 +81,15 @@ function BrowserFrame({ project }: { project: Project }) {
   );
 }
 
-function ProjectRow({ project, reverse }: { project: Project; reverse: boolean }) {
+function ProjectRow({
+  project,
+  reverse,
+  onOpenStructure,
+}: {
+  project: Project;
+  reverse: boolean;
+  onOpenStructure: () => void;
+}) {
   return (
     <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
       {/* Макет интерфейса */}
@@ -166,15 +177,15 @@ function ProjectRow({ project, reverse }: { project: Project; reverse: boolean }
               Открыть живое демо
               <span aria-hidden>↗</span>
             </a>
-            <a
-              href={project.codeUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-brand-violet/60 hover:text-brand-indigo dark:border-ink-700 dark:text-slate-200 dark:hover:text-brand-violet"
+            <button
+              type="button"
+              onClick={onOpenStructure}
+              data-cursor
+              className="group inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-brand-violet/60 hover:text-brand-indigo dark:border-ink-700 dark:text-slate-200 dark:hover:text-brand-violet"
             >
-              Код на GitHub
-              <span aria-hidden>🛠</span>
-            </a>
+              Посмотреть структуру
+              <span aria-hidden className="text-brand-violet transition-transform duration-300 group-hover:rotate-90">⌘</span>
+            </button>
           </div>
         </Reveal>
       </div>
@@ -183,6 +194,8 @@ function ProjectRow({ project, reverse }: { project: Project; reverse: boolean }
 }
 
 export function Projects() {
+  const [active, setActive] = useState<Project | null>(null);
+
   return (
     <section id="projects" className="relative overflow-hidden py-24 sm:py-32">
       <div className="container-x">
@@ -198,10 +211,21 @@ export function Projects() {
 
         <div className="mt-20 space-y-24 sm:space-y-32">
           {projects.map((project, i) => (
-            <ProjectRow key={project.id} project={project} reverse={i % 2 === 1} />
+            <ProjectRow
+              key={project.id}
+              project={project}
+              reverse={i % 2 === 1}
+              onOpenStructure={() => setActive(project)}
+            />
           ))}
         </div>
       </div>
+
+      {active && (
+        <Suspense fallback={null}>
+          <StructureModal projectId={active.id} onClose={() => setActive(null)} />
+        </Suspense>
+      )}
     </section>
   );
 }

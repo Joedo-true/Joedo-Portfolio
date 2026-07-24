@@ -42,9 +42,6 @@ export function Hero() {
               </span>
               Свободен для новых проектов
             </span>
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-slate-400">
-              осталось 2 слота в этом месяце
-            </span>
           </motion.div>
 
           <motion.h1
