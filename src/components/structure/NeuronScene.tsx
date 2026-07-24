@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, OrbitControls, QuadraticBezierLine } from '@react-three/drei';
+import { CubicBezierLine, Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { FileNode } from '../../data/fileTree';
 
@@ -32,54 +32,53 @@ function fibDir(i: number, n: number) {
 const labelStyle = { textShadow: '0 1px 6px rgba(0,0,0,0.9)' } as const;
 
 function Dendrite({ end, delay }: { end: THREE.Vector3; delay: number }) {
-  const mid = useMemo(() => {
-    const m = end.clone().multiplyScalar(0.5);
-    const perp = new THREE.Vector3(-end.z, end.x, end.y).normalize().multiplyScalar(0.5);
-    return m.add(perp);
+  // Плавная дуга (кубический Безье): линия мягко изгибается вбок,
+  // отходит от сомы и так же плавно приходит к узлу.
+  const { c1, c2, curve } = useMemo(() => {
+    const perp = new THREE.Vector3(-end.z, end.x, end.y).normalize().multiplyScalar(end.length() * 0.3);
+    const a = end.clone().multiplyScalar(0.3).add(perp);
+    const b = end.clone().multiplyScalar(0.7).add(perp);
+    return { c1: a, c2: b, curve: new THREE.CubicBezierCurve3(new THREE.Vector3(0, 0, 0), a, b, end) };
   }, [end]);
-  const curve = useMemo(
-    () => new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0, 0), mid, end),
-    [mid, end],
-  );
+
   const ref = useRef<THREE.Object3D & { material?: THREE.Material & { opacity: number } }>(null);
   const pulse = useRef<THREE.Mesh>(null);
   const start = useRef(performance.now());
-  const life = 1500; // мс на пробег импульса
+  const life = 1900; // мс на пробег импульса (медленнее — спокойнее)
   const phase = (delay % life) / life;
 
   useFrame(() => {
     const now = performance.now();
     const el = now - start.current;
-    // Проявление линии
     const mat = ref.current?.material;
-    if (mat) mat.opacity = easeOut(Math.min(1, Math.max(0, (el - delay) / 500))) * 0.4;
-    // Импульс, бегущий от сомы к узлу
+    if (mat) mat.opacity = easeOut(Math.min(1, Math.max(0, (el - delay) / 600))) * 0.24;
     const p = pulse.current;
     if (p && el > delay) {
       const tt = (el / life + phase) % 1;
       curve.getPoint(tt, p.position);
-      const glow = Math.min(1, tt * 6) * (1 - tt); // вспышка у центра → затухание к узлу
-      p.scale.setScalar(0.06 + glow * 0.14);
-      (p.material as THREE.MeshBasicMaterial).opacity = glow;
+      const glow = Math.min(1, tt * 5) * (1 - tt);
+      p.scale.setScalar(0.05 + glow * 0.08);
+      (p.material as THREE.MeshBasicMaterial).opacity = glow * 0.5;
     }
   });
 
   return (
     <>
-      <QuadraticBezierLine
+      <CubicBezierLine
         ref={ref as never}
         start={[0, 0, 0]}
         end={[end.x, end.y, end.z]}
-        mid={[mid.x, mid.y, mid.z]}
+        midA={[c1.x, c1.y, c1.z]}
+        midB={[c2.x, c2.y, c2.z]}
         color={C.line}
-        lineWidth={1.1}
+        lineWidth={0.85}
         transparent
         opacity={0}
       />
       <mesh ref={pulse}>
         <sphereGeometry args={[1, 12, 12]} />
         <meshBasicMaterial
-          color="#BDEBFF"
+          color="#9FD6F0"
           transparent
           opacity={0}
           depthWrite={false}
@@ -162,17 +161,17 @@ function ChildNode({
     <group ref={group}>
       {isFolder && <HitArea onClick={onOpen} onHover={setHoverBoth} />}
       <mesh>
-        {isFolder ? <octahedronGeometry args={[0.3, 0]} /> : <sphereGeometry args={[0.17, 20, 20]} />}
+        {isFolder ? <octahedronGeometry args={[0.28, 0]} /> : <sphereGeometry args={[0.16, 20, 20]} />}
         <meshStandardMaterial
           color={isFolder ? C.folder : C.file}
           emissive={isFolder ? C.folder : C.file}
-          emissiveIntensity={hover ? 1.1 : 0.55}
-          roughness={0.3}
-          metalness={0.2}
+          emissiveIntensity={hover ? 0.6 : 0.28}
+          roughness={0.5}
+          metalness={0.15}
           flatShading={isFolder}
         />
       </mesh>
-      <Html center distanceFactor={9} position={[0, isFolder ? 0.6 : 0.44, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
+      <Html center distanceFactor={11} position={[0, isFolder ? 0.6 : 0.44, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
         <div
           className={`select-none whitespace-nowrap font-mono text-[11px] ${
             isFolder ? 'font-semibold text-cyan-200' : 'text-violet-200'
@@ -204,10 +203,10 @@ function BackNode({ onBack, hoverRef }: { onBack: () => void; hoverRef: React.Mu
     <group ref={ref} position={pos}>
       <HitArea onClick={onBack} onHover={setHoverBoth} radius={0.7} />
       <mesh>
-        <torusGeometry args={[0.26, 0.09, 16, 32]} />
-        <meshStandardMaterial color={C.back} emissive={C.back} emissiveIntensity={hover ? 1.2 : 0.6} roughness={0.3} />
+        <torusGeometry args={[0.24, 0.08, 16, 32]} />
+        <meshStandardMaterial color={C.back} emissive={C.back} emissiveIntensity={hover ? 0.65 : 0.35} roughness={0.45} />
       </mesh>
-      <Html center distanceFactor={9} position={[0, 0.52, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
+      <Html center distanceFactor={11} position={[0, 0.52, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
         <div className="select-none whitespace-nowrap font-mono text-[11px] font-semibold text-fuchsia-200" style={labelStyle}>
           ← назад
         </div>
@@ -228,10 +227,10 @@ function Soma({ name }: { name: string }) {
   return (
     <group>
       <mesh ref={ref}>
-        <icosahedronGeometry args={[0.7, 2]} />
-        <meshStandardMaterial color={C.soma} emissive={C.somaEmissive} emissiveIntensity={0.7} roughness={0.25} metalness={0.3} flatShading />
+        <icosahedronGeometry args={[0.6, 2]} />
+        <meshStandardMaterial color={C.soma} emissive={C.somaEmissive} emissiveIntensity={0.38} roughness={0.42} metalness={0.2} flatShading />
       </mesh>
-      <Html center distanceFactor={10} position={[0, -1.05, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
+      <Html center distanceFactor={12} position={[0, -1.05, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
         <div className="select-none whitespace-nowrap rounded-lg bg-white/5 px-2.5 py-1 font-mono text-xs font-bold text-white backdrop-blur-sm" style={labelStyle}>
           {name}
         </div>
@@ -274,7 +273,7 @@ function Particles() {
   });
   return (
     <points ref={ref} geometry={geo}>
-      <pointsMaterial color={C.file} size={0.05} sizeAttenuation transparent opacity={0.5} />
+      <pointsMaterial color={C.file} size={0.042} sizeAttenuation transparent opacity={0.3} />
     </points>
   );
 }
@@ -304,10 +303,10 @@ export function NeuronScene({
 
   return (
     <>
-      <ambientLight intensity={0.7} />
-      <pointLight position={[0, 0, 0]} color={C.soma} intensity={2.4} distance={14} decay={0} />
-      <pointLight position={[5, 4, 4]} color={C.folder} intensity={1.2} decay={0} />
-      <pointLight position={[-5, -3, -3]} color={C.back} intensity={1} decay={0} />
+      <ambientLight intensity={0.55} />
+      <pointLight position={[0, 0, 0]} color={C.soma} intensity={1.5} distance={16} decay={0} />
+      <pointLight position={[5, 4, 4]} color={C.folder} intensity={0.75} decay={0} />
+      <pointLight position={[-5, -3, -3]} color={C.back} intensity={0.65} decay={0} />
 
       <group ref={spin}>
         <Bloom key={path.join('/')}>

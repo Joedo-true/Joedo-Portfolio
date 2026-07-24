@@ -119,7 +119,7 @@ export default function StructureModal({
         <div className="relative flex-1" onClick={(e) => e.stopPropagation()}>
           <Canvas
             dpr={[1, 1.75]}
-            camera={{ position: [0, 0, 8], fov: 45 }}
+            camera={{ position: [0, 0, 10.5], fov: 42 }}
             gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           >
             <NeuronScene node={current} path={path} onOpen={open} onBack={back} />
