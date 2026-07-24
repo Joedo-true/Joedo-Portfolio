@@ -101,7 +101,12 @@ export function Hero() {
           className="relative order-1 h-[20rem] sm:h-[24rem] lg:order-2 lg:h-[34rem]"
         >
           <div className="absolute inset-0 -z-10 m-auto h-3/4 w-3/4 rounded-full bg-brand-violet/20 blur-3xl" />
-          <HeroCanvas />
+          {/* Канвас намеренно крупнее своего слота и выходит за него: модель
+              рендерится в центре большого прозрачного холста, поэтому её края
+              физически не доходят до видимой границы — обрезки нет вообще. */}
+          <div className="absolute -inset-x-16 -inset-y-14 sm:-inset-x-20 lg:-inset-x-24 lg:-inset-y-16">
+            <HeroCanvas />
+          </div>
         </motion.div>
       </div>
 

@@ -112,7 +112,7 @@ export default function Scene3D() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 7.4], fov: 42 }}
+      camera={{ position: [0, 0, 9.2], fov: 42 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       style={{
         pointerEvents: 'none',
