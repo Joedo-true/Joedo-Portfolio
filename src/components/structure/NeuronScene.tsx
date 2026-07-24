@@ -128,24 +128,18 @@ function ChildNode({
   radius,
   index,
   onOpen,
-  hoverRef,
 }: {
   child: FileNode;
   dir: THREE.Vector3;
   radius: number;
   index: number;
   onOpen: () => void;
-  hoverRef: React.MutableRefObject<number>;
 }) {
   const group = useRef<THREE.Group>(null);
   const start = useRef(performance.now());
   const [hover, setHover] = useState(false);
   const isFolder = child.type === 'folder';
   const target = useMemo(() => dir.clone().multiplyScalar(radius), [dir, radius]);
-  const setHoverBoth = (v: boolean) => {
-    setHover(v);
-    hoverRef.current = Math.max(0, hoverRef.current + (v ? 1 : -1));
-  };
 
   useFrame((state) => {
     const g = group.current;
@@ -159,7 +153,7 @@ function ChildNode({
 
   return (
     <group ref={group}>
-      {isFolder && <HitArea onClick={onOpen} onHover={setHoverBoth} />}
+      {isFolder && <HitArea onClick={onOpen} onHover={setHover} />}
       <mesh>
         {isFolder ? <octahedronGeometry args={[0.28, 0]} /> : <sphereGeometry args={[0.16, 20, 20]} />}
         <meshStandardMaterial
@@ -185,14 +179,10 @@ function ChildNode({
   );
 }
 
-function BackNode({ onBack, hoverRef }: { onBack: () => void; hoverRef: React.MutableRefObject<number> }) {
+function BackNode({ onBack }: { onBack: () => void }) {
   const ref = useRef<THREE.Group>(null);
   const [hover, setHover] = useState(false);
   const pos = useMemo(() => new THREE.Vector3(0.35, -1, 0.3).normalize().multiplyScalar(2.4), []);
-  const setHoverBoth = (v: boolean) => {
-    setHover(v);
-    hoverRef.current = Math.max(0, hoverRef.current + (v ? 1 : -1));
-  };
   useFrame((state) => {
     if (ref.current) {
       const bob = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.06;
@@ -201,7 +191,7 @@ function BackNode({ onBack, hoverRef }: { onBack: () => void; hoverRef: React.Mu
   });
   return (
     <group ref={ref} position={pos}>
-      <HitArea onClick={onBack} onHover={setHoverBoth} radius={0.7} />
+      <HitArea onClick={onBack} onHover={setHover} radius={0.7} />
       <mesh>
         <torusGeometry args={[0.24, 0.08, 8, 20]} />
         <meshStandardMaterial color={C.back} emissive={C.back} emissiveIntensity={hover ? 0.65 : 0.35} roughness={0.45} />
@@ -294,18 +284,15 @@ export function NeuronScene({
   const radius = Math.min(3.4, 2.5 + n * 0.05);
   const dirs = useMemo(() => children.map((_, i) => fibDir(i, n)), [children, n]);
 
-  // Медленное вращение всей сцены (пауза при наведении на узел — легче кликать)
+  // Нейрон вращается постоянно — наведение на узел вращение не останавливает.
   const spin = useRef<THREE.Group>(null);
-  const hoverRef = useRef(0);
   useFrame((_, delta) => {
-    if (spin.current && hoverRef.current <= 0) spin.current.rotation.y += delta * 0.12;
+    if (spin.current) spin.current.rotation.y += delta * 0.12;
   });
 
-  // При навигации узел под курсором размонтируется без pointer-out, из-за чего
-  // счётчик наведения «залипал» и вращение не возобновлялось. Сбрасываем его.
+  // Сброс курсора при навигации: узел под курсором мог размонтироваться без pointer-out.
   const pathKey = path.join('/');
   useEffect(() => {
-    hoverRef.current = 0;
     document.body.style.cursor = '';
   }, [pathKey]);
 
@@ -322,10 +309,10 @@ export function NeuronScene({
           {children.map((child, i) => (
             <group key={child.name}>
               <Dendrite end={dirs[i].clone().multiplyScalar(radius)} delay={i * 55} />
-              <ChildNode child={child} dir={dirs[i]} radius={radius} index={i} onOpen={() => onOpen(i)} hoverRef={hoverRef} />
+              <ChildNode child={child} dir={dirs[i]} radius={radius} index={i} onOpen={() => onOpen(i)} />
             </group>
           ))}
-          {path.length > 0 && <BackNode onBack={onBack} hoverRef={hoverRef} />}
+          {path.length > 0 && <BackNode onBack={onBack} />}
         </Bloom>
       </group>
 
