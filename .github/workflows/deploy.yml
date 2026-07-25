@@ -43,6 +43,10 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Пытаемся включить Pages автоматически (если у Actions есть права).
+          # Если не сработает — включите вручную: Settings → Pages → Source: GitHub Actions.
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
