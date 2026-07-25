@@ -74,8 +74,25 @@ npm run preview  # предпросмотр прод-сборки
 
 ## 🌐 Деплой
 
-Проект — статический, разворачивается на **Vercel** или **Netlify** из коробки:
-команда сборки `npm run build`, каталог публикации `dist`.
+### GitHub Pages (настроено ✅)
+
+В репозитории уже лежит workflow `.github/workflows/deploy.yml`, который
+автоматически собирает сайт и публикует его на GitHub Pages при каждом пуше
+в основную ветку. Нужно один раз включить Pages:
+
+1. Откройте в репозитории **Settings → Pages**.
+2. В разделе **Build and deployment → Source** выберите **GitHub Actions**.
+3. Готово. После следующего пуша (или запустите workflow вручную:
+   вкладка **Actions → Deploy to GitHub Pages → Run workflow**) сайт появится по адресу:
+
+   **`https://joedo-true.github.io/Joedo-Portfolio/`**
+
+Пути к ресурсам относительные (`base: './'`), поэтому сайт корректно работает
+из подпапки `/Joedo-Portfolio/` без дополнительных настроек.
+
+### Vercel / Netlify
+
+Тоже из коробки: команда сборки `npm run build`, каталог публикации `dist`.
 
 ## 🧱 Технологии
 
