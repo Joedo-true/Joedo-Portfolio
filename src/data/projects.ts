@@ -11,7 +11,7 @@ export interface Project {
   /** 👉 ССЫЛКА НА ЖИВОЕ ДЕМО. Кнопка «Открыть живое демо» ведёт сюда.
    *  Замените '#' на реальный URL сайта проекта, например 'https://autudash.vercel.app'. */
   demoUrl?: string;
-  /** Больше не используется (кнопка GitHub заменена на «Посмотреть структуру»). */
+  /** 👉 ССЫЛКА НА РЕПОЗИТОРИЙ GITHUB. Кнопка «GitHub» ведёт сюда (открывается в новой вкладке). */
   codeUrl?: string;
   /** Тип встроенного макета интерфейса */
   mockup: 'dashboard' | 'shop' | 'calc';
@@ -36,7 +36,7 @@ export const projects: Project[] = [
       { value: 'Live', label: 'поиск и фильтрация' },
     ],
     demoUrl: '#',
-    codeUrl: 'https://github.com/joedo-true',
+    codeUrl: 'https://github.com/Joedo-true/-AutuDash-CRM',
     mockup: 'dashboard',
     accent: '#8B5CF6',
   },
@@ -57,7 +57,7 @@ export const projects: Project[] = [
       { value: '100%', label: 'адаптивность' },
     ],
     demoUrl: '#',
-    codeUrl: 'https://github.com/joedo-true',
+    codeUrl: 'https://github.com/Joedo-true/-sollers-shop',
     mockup: 'shop',
     accent: '#10B981',
   },
@@ -78,7 +78,7 @@ export const projects: Project[] = [
       { value: 'Live', label: 'расчёт стоимости' },
     ],
     demoUrl: '#',
-    codeUrl: 'https://github.com/joedo-true',
+    codeUrl: 'https://github.com/Joedo-true/FlexiCalc',
     mockup: 'calc',
     accent: '#D946EF',
   },
