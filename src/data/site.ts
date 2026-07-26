@@ -7,7 +7,7 @@ export const site = {
     handle: '@Joedotrue',
     url: 'https://t.me/Joedotrue',
   },
-  email: 'joedotrue12@gmail.com',
+  email: 'joedotrue1@gmail.com',
   github: {
     handle: 'joedo-true',
     url: 'https://github.com/joedo-true',
