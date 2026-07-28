@@ -31,10 +31,11 @@ function Clock() {
 
 export function Hero() {
   return (
-    <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden">
+    // select-none: перетаскивание по баннеру «цепляет» сетку, а не выделяет заголовок
+    <section id="top" className="relative flex min-h-[100svh] flex-col select-none overflow-hidden">
       {/* Сетка занимает баннер целиком — от самого верха страницы */}
       <div className="pointer-events-none absolute inset-0 text-white">
-        <WaveGrid className="h-full w-full" cols={34} rows={22} amp={13} opacity={0.4} />
+        <WaveGrid className="h-full w-full" cols={34} rows={22} amp={13} opacity={0.4} interactive />
       </div>
 
       {/* Затемнение под текстом: сетка не должна съедать контраст подзаголовка */}
