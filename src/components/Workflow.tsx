@@ -7,7 +7,7 @@ export function Workflow() {
   return (
     <section id="process" className="relative rule-t py-20 sm:py-28">
       <div className="pointer-events-none absolute right-0 top-0 hidden h-[20rem] w-2/5 text-white lg:block">
-        <WarpGridSVG className="h-full w-full" cols={34} rows={14} amp={20} opacity={0.28} />
+        <WarpGridSVG className="h-full w-full" cols={17} rows={14} amp={20} opacity={0.28} duration={38} />
       </div>
       <div className="container-x relative">
         <SectionHeading

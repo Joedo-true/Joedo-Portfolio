@@ -120,7 +120,7 @@ export function Contact() {
           {/* Прямые каналы */}
           <div className="relative rule-t lg:rule-l lg:border-t-0">
             <div className="pointer-events-none absolute inset-0 text-white">
-              <WarpGridSVG className="h-full w-full" cols={26} rows={18} amp={18} opacity={0.26} />
+              <WarpGridSVG className="h-full w-full" cols={13} rows={18} amp={18} opacity={0.26} duration={42} />
             </div>
             <a
               href={site.telegram.url}

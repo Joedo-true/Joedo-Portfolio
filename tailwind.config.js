@@ -65,6 +65,11 @@ export default {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-12px)' },
         },
+        // Сдвиг ровно на один период волны — цикл замыкается бесшовно
+        wave: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'pulse-ring': 'pulse-ring 2.4s cubic-bezier(0.4,0,0.6,1) infinite',
@@ -72,6 +77,7 @@ export default {
         scan: 'scan 7s linear infinite',
         caret: 'caret 1.1s step-end infinite',
         float: 'float 8s ease-in-out infinite',
+        wave: 'wave 26s linear infinite',
       },
     },
   },

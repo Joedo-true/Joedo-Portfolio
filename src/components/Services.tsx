@@ -8,7 +8,7 @@ export function Services() {
     <section id="services" className="relative rule-t py-20 sm:py-28">
       {/* Сетка-фон в правой половине шапки секции */}
       <div className="pointer-events-none absolute right-0 top-0 hidden h-[22rem] w-1/2 text-white lg:block">
-        <WarpGridSVG className="h-full w-full" cols={40} rows={16} amp={22} opacity={0.3} />
+        <WarpGridSVG className="h-full w-full" cols={20} rows={16} amp={22} opacity={0.3} duration={34} />
       </div>
       <div className="container-x relative">
         <SectionHeading

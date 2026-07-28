@@ -34,7 +34,7 @@ export function Hero() {
     <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden">
       {/* Сетка занимает баннер целиком — от самого верха страницы */}
       <div className="pointer-events-none absolute inset-0 text-white">
-        <WarpGridSVG className="h-full w-full" cols={52} rows={22} amp={30} opacity={0.42} />
+        <WarpGridSVG className="h-full w-full" cols={26} rows={22} amp={30} opacity={0.42} />
       </div>
 
       {/* Затемнение под текстом: сетка не должна съедать контраст подзаголовка */}
