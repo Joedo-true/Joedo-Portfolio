@@ -120,7 +120,7 @@ export function Contact() {
           {/* Прямые каналы */}
           <div className="relative rule-t lg:rule-l lg:border-t-0">
             <div className="pointer-events-none absolute inset-0 text-white">
-              <WaveGrid className="h-full w-full" cols={14} rows={16} amp={9} opacity={0.24} speed={0.6} />
+              <WaveGrid className="h-full w-full" cols={14} rows={16} amp={9} opacity={0.24} animated={false} />
             </div>
             <a
               href={site.telegram.url}

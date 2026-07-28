@@ -8,7 +8,7 @@ export function Services() {
     <section id="services" className="relative rule-t py-20 sm:py-28">
       {/* Сетка-фон в правой половине шапки секции */}
       <div className="pointer-events-none absolute right-0 top-0 hidden h-[22rem] w-1/2 text-white lg:block">
-        <WaveGrid className="h-full w-full" cols={22} rows={14} amp={10} opacity={0.28} speed={0.8} />
+        <WaveGrid className="h-full w-full" cols={22} rows={14} amp={10} opacity={0.28} animated={false} />
       </div>
       <div className="container-x relative">
         <SectionHeading

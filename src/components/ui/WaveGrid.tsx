@@ -21,6 +21,7 @@ export function WaveGrid({
   speed = 1,
   className = '',
   fade = true,
+  animated = true,
 }: {
   cols?: number;
   rows?: number;
@@ -30,6 +31,8 @@ export function WaveGrid({
   speed?: number;
   className?: string;
   fade?: boolean;
+  /** false — один статичный кадр, цикл анимации не запускается вовсе */
+  animated?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -42,6 +45,10 @@ export function WaveGrid({
     if (!ctx) return;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Неподвижная сетка: рисуем один кадр и не заводим цикл
+    const still = !animated || reduced;
+    // Момент времени для статичного кадра — рябь уже «разошлась»
+    const STATIC_T = 2.4;
 
     let w = 0;
     let h = 0;
@@ -94,7 +101,7 @@ export function WaveGrid({
     let running = true;
 
     const draw = (now: number) => {
-      const t = reduced ? 0 : ((now - start) / 1000) * speed;
+      const t = still ? STATIC_T : ((now - start) / 1000) * speed;
 
       ctx.clearRect(0, 0, w, h);
       ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
@@ -134,7 +141,7 @@ export function WaveGrid({
       }
       ctx.stroke();
 
-      if (running && !reduced) raf = requestAnimationFrame(draw);
+      if (running && !still) raf = requestAnimationFrame(draw);
     };
 
     resize();
@@ -142,33 +149,36 @@ export function WaveGrid({
 
     const ro = new ResizeObserver(() => {
       resize();
-      if (reduced) requestAnimationFrame(draw);
+      // Статичной сетке нужно перерисоваться после смены размера
+      if (still) requestAnimationFrame(draw);
     });
     ro.observe(wrap);
 
-    // За пределами экрана кадры не считаем
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting && !running) {
-          running = true;
-          start = performance.now() - 1;
-          raf = requestAnimationFrame(draw);
-        } else if (!e.isIntersecting) {
-          running = false;
-          cancelAnimationFrame(raf);
-        }
-      },
-      { rootMargin: '120px' },
-    );
-    io.observe(wrap);
+    // Слежение за видимостью нужно только анимированной сетке
+    const io = still
+      ? null
+      : new IntersectionObserver(
+          ([e]) => {
+            if (e.isIntersecting && !running) {
+              running = true;
+              start = performance.now() - 1;
+              raf = requestAnimationFrame(draw);
+            } else if (!e.isIntersecting) {
+              running = false;
+              cancelAnimationFrame(raf);
+            }
+          },
+          { rootMargin: '120px' },
+        );
+    io?.observe(wrap);
 
     return () => {
       running = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
-      io.disconnect();
+      io?.disconnect();
     };
-  }, [cols, rows, amp, opacity, speed]);
+  }, [cols, rows, amp, opacity, speed, animated]);
 
   return (
     <div
