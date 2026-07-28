@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Counter } from './ui/Counter';
 import { Barcode } from './ui/Barcode';
-import { WarpGridSVG } from './ui/WarpGridSVG';
+import { WaveGrid } from './ui/WaveGrid';
 import { site } from '../data/site';
 
 const rise = {
@@ -34,7 +34,7 @@ export function Hero() {
     <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden">
       {/* Сетка занимает баннер целиком — от самого верха страницы */}
       <div className="pointer-events-none absolute inset-0 text-white">
-        <WarpGridSVG className="h-full w-full" cols={26} rows={22} amp={30} opacity={0.42} />
+        <WaveGrid className="h-full w-full" cols={34} rows={22} amp={13} opacity={0.4} />
       </div>
 
       {/* Затемнение под текстом: сетка не должна съедать контраст подзаголовка */}

@@ -1,14 +1,14 @@
 import { motion } from 'framer-motion';
 import { services } from '../data/services';
 import { SectionHeading } from './ui/SectionHeading';
-import { WarpGridSVG } from './ui/WarpGridSVG';
+import { WaveGrid } from './ui/WaveGrid';
 
 export function Services() {
   return (
     <section id="services" className="relative rule-t py-20 sm:py-28">
       {/* Сетка-фон в правой половине шапки секции */}
       <div className="pointer-events-none absolute right-0 top-0 hidden h-[22rem] w-1/2 text-white lg:block">
-        <WarpGridSVG className="h-full w-full" cols={20} rows={16} amp={22} opacity={0.3} duration={34} />
+        <WaveGrid className="h-full w-full" cols={22} rows={14} amp={10} opacity={0.28} speed={0.8} />
       </div>
       <div className="container-x relative">
         <SectionHeading

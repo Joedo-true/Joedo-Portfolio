@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion';
 import { workflowSteps } from '../data/workflow';
 import { SectionHeading } from './ui/SectionHeading';
-import { WarpGridSVG } from './ui/WarpGridSVG';
+import { WaveGrid } from './ui/WaveGrid';
 
 export function Workflow() {
   return (
     <section id="process" className="relative rule-t py-20 sm:py-28">
       <div className="pointer-events-none absolute right-0 top-0 hidden h-[20rem] w-2/5 text-white lg:block">
-        <WarpGridSVG className="h-full w-full" cols={17} rows={14} amp={20} opacity={0.28} duration={38} />
+        <WaveGrid className="h-full w-full" cols={18} rows={12} amp={10} opacity={0.26} speed={0.7} />
       </div>
       <div className="container-x relative">
         <SectionHeading

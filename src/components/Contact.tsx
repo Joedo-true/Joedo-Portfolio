@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { site } from '../data/site';
 import { SectionHeading } from './ui/SectionHeading';
 import { Barcode } from './ui/Barcode';
-import { WarpGridSVG } from './ui/WarpGridSVG';
+import { WaveGrid } from './ui/WaveGrid';
 
 interface FieldProps {
   id: string;
@@ -120,7 +120,7 @@ export function Contact() {
           {/* Прямые каналы */}
           <div className="relative rule-t lg:rule-l lg:border-t-0">
             <div className="pointer-events-none absolute inset-0 text-white">
-              <WarpGridSVG className="h-full w-full" cols={13} rows={18} amp={18} opacity={0.26} duration={42} />
+              <WaveGrid className="h-full w-full" cols={14} rows={16} amp={9} opacity={0.24} speed={0.6} />
             </div>
             <a
               href={site.telegram.url}
