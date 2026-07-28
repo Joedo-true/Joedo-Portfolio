@@ -8,12 +8,12 @@ function LogoMark() {
     <a
       href="#top"
       aria-label={`${site.name} — на главную`}
-      className="group grid h-9 w-9 shrink-0 place-items-center border border-white/25 transition-colors hover:border-neon-magenta"
+      className="group grid h-9 w-9 shrink-0 place-items-center border border-white/25 transition-colors hover:border-white/60"
     >
       <span className="flex w-4 flex-col gap-[3px]">
-        <i className="h-[2px] w-full bg-white transition-colors group-hover:bg-neon-magenta" />
-        <i className="h-[2px] w-3/4 bg-white transition-colors group-hover:bg-neon-magenta" />
-        <i className="h-[2px] w-full bg-white transition-colors group-hover:bg-neon-magenta" />
+        <i className="h-[2px] w-full bg-white transition-colors group-hover:bg-white" />
+        <i className="h-[2px] w-3/4 bg-white transition-colors group-hover:bg-white" />
+        <i className="h-[2px] w-full bg-white transition-colors group-hover:bg-white" />
       </span>
     </a>
   );

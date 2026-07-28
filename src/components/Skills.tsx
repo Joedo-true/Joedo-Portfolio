@@ -38,7 +38,7 @@ export function Skills() {
     <section id="stack" className="relative rule-t py-20 sm:py-28">
       <div className="container-x">
         <SectionHeading
-          title="Стек"
+          title="Skills"
           label="My skills"
           seed={23}
           intro="Только современный и надёжный инструментарий, сгруппированный по назначению — так видно системность подхода."

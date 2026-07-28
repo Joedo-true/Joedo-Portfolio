@@ -24,7 +24,7 @@ export function SectionHeading({
         <div>
           <h2 className="display text-white">
             {title}
-            <span className="ml-1 animate-caret text-neon-magenta">_</span>
+            <span className="ml-1 animate-caret text-white/70">_</span>
           </h2>
           <Barcode seed={seed} className="mt-5 text-white/80" />
         </div>

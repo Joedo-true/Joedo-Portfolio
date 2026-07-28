@@ -20,7 +20,7 @@ function MarqueeBand() {
             <span className="px-6 font-mono text-[12px] uppercase tracking-mega text-white/45">
               {t}
             </span>
-            <span aria-hidden className="text-neon-magenta">
+            <span aria-hidden className="text-white/25">
               ◆
             </span>
           </span>

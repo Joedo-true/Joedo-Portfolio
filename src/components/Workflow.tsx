@@ -1,13 +1,17 @@
 import { motion } from 'framer-motion';
 import { workflowSteps } from '../data/workflow';
 import { SectionHeading } from './ui/SectionHeading';
+import { WarpGridSVG } from './ui/WarpGridSVG';
 
 export function Workflow() {
   return (
     <section id="process" className="relative rule-t py-20 sm:py-28">
-      <div className="container-x">
+      <div className="pointer-events-none absolute right-0 top-0 hidden h-[20rem] w-2/5 text-white lg:block">
+        <WarpGridSVG className="h-full w-full" cols={34} rows={14} amp={20} opacity={0.28} />
+      </div>
+      <div className="container-x relative">
         <SectionHeading
-          title="Процесс"
+          title="Process"
           label="How it works"
           seed={31}
           intro="Вы всегда знаете, на каком этапе проект и что будет дальше. Чёткие шаги, демо на каждом этапе и контроль сроков."
@@ -26,7 +30,7 @@ export function Workflow() {
             className="group rule-b transition-colors duration-300 hover:bg-white/[0.025]"
           >
             <div className="container-x grid gap-4 py-8 md:grid-cols-[7rem_1fr_1.2fr] md:items-baseline md:gap-10">
-              <span className="font-mono text-3xl font-light text-white/25 transition-colors duration-300 group-hover:text-neon-magenta">
+              <span className="font-mono text-3xl font-light text-white/25 transition-colors duration-300 group-hover:text-white">
                 {step.num}
               </span>
               <h3 className="font-mono text-base uppercase tracking-[0.06em] text-white">

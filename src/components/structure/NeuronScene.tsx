@@ -6,12 +6,12 @@ import type { FileNode } from '../../data/fileTree';
 
 // Палитра — в тон сайту (плоский неон на near-black)
 const C = {
-  soma: '#3B5BFF',
-  somaEmissive: '#101A4D',
-  folder: '#C6FF3D',
-  file: '#A78BFA',
-  line: '#3B5BFF',
-  back: '#FF3DAF',
+  soma: '#E8E8EC',
+  somaEmissive: '#2A2A30',
+  folder: '#FFFFFF',
+  file: '#9A9AA4',
+  line: '#FFFFFF',
+  back: '#FFFFFF',
 };
 
 const easeOutBack = (t: number) => {
@@ -78,7 +78,7 @@ function Dendrite({ end, delay }: { end: THREE.Vector3; delay: number }) {
       <mesh ref={pulse}>
         <sphereGeometry args={[1, 12, 12]} />
         <meshBasicMaterial
-          color="#9FD6F0"
+          color="#FFFFFF"
           transparent
           opacity={0}
           depthWrite={false}
@@ -168,7 +168,7 @@ function ChildNode({
       <Html center distanceFactor={11} position={[0, isFolder ? 0.6 : 0.44, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
         <div
           className={`select-none whitespace-nowrap font-mono text-[11px] ${
-            isFolder ? 'font-semibold text-cyan-200' : 'text-violet-200'
+            isFolder ? 'font-semibold text-white' : 'text-white/60'
           }`}
           style={labelStyle}
         >
@@ -197,7 +197,7 @@ function BackNode({ onBack }: { onBack: () => void }) {
         <meshStandardMaterial color={C.back} emissive={C.back} emissiveIntensity={hover ? 0.65 : 0.35} roughness={0.45} />
       </mesh>
       <Html center distanceFactor={11} position={[0, 0.52, 0]} pointerEvents="none" zIndexRange={[10, 0]}>
-        <div className="select-none whitespace-nowrap font-mono text-[11px] font-semibold text-fuchsia-200" style={labelStyle}>
+        <div className="select-none whitespace-nowrap font-mono text-[11px] font-semibold text-white" style={labelStyle}>
           ← назад
         </div>
       </Html>

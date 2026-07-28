@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { HeroCanvas } from './three/HeroCanvas';
 import { Counter } from './ui/Counter';
 import { Barcode } from './ui/Barcode';
+import { WarpGridSVG } from './ui/WarpGridSVG';
 import { site } from '../data/site';
 
 const rise = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
 };
 
@@ -31,83 +31,86 @@ function Clock() {
 
 export function Hero() {
   return (
-    <section id="top" className="relative min-h-[100svh] overflow-hidden pt-24">
-      {/* Сигнатурная искривлённая сетка */}
-      <div className="absolute inset-0">
-        <HeroCanvas />
+    <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden">
+      {/* Сетка занимает баннер целиком — от самого верха страницы */}
+      <div className="pointer-events-none absolute inset-0 text-white">
+        <WarpGridSVG className="h-full w-full" cols={52} rows={22} amp={30} opacity={0.42} />
       </div>
 
-      <div className="container-x relative z-10 flex min-h-[calc(100svh-6rem)] flex-col">
+      {/* Затемнение под текстом: сетка не должна съедать контраст подзаголовка */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 46% 38% at 50% 45%, rgba(11,11,13,0.92) 0%, rgba(11,11,13,0.7) 45%, transparent 78%)',
+        }}
+      />
+
+      {/* Текст по центру баннера */}
+      <div className="container-x relative z-10 flex flex-1 items-center justify-center py-32">
         <motion.div
           initial="hidden"
           animate="visible"
-          transition={{ staggerChildren: 0.08, delayChildren: 0.1 }}
-          className="flex-1 pt-10 lg:pt-20"
+          transition={{ staggerChildren: 0.08, delayChildren: 0.15 }}
+          className="text-center"
         >
-          <motion.div variants={rise} className="flex items-center gap-3">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-neon-acid" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-neon-acid" />
-            </span>
-            <span className="meta !text-white/70">Свободен для новых проектов</span>
-          </motion.div>
-
           <motion.h1
             variants={rise}
-            className="mt-7 max-w-[15ch] font-mono text-[clamp(2.4rem,8vw,6.2rem)] font-light uppercase leading-[0.94] tracking-[0.01em] text-white"
+            className="font-mono text-[clamp(2.2rem,7.5vw,5.8rem)] font-light uppercase leading-[0.98] tracking-[0.02em] text-white"
           >
             React
             <br />
-            <span className="text-neon-magenta">интерфейсы</span>
+            интерфейсы
             <br />
             под ключ
           </motion.h1>
 
           <motion.p
             variants={rise}
-            className="mt-8 max-w-md text-sm leading-relaxed text-white/55"
+            className="mx-auto mt-8 max-w-lg text-sm leading-relaxed text-white/50"
           >
             Калькуляторы лидов, CRM-панели и умные каталоги. Ускоряю загрузку, навожу порядок в
             логике и делаю так, чтобы каждый экран работал на заявку.
           </motion.p>
 
-          <motion.div variants={rise} className="mt-9 flex flex-wrap items-center gap-3">
+          <motion.div variants={rise} className="mt-10 flex flex-wrap justify-center gap-3">
             <a href="#projects" className="pill">
               Смотреть кейсы <span aria-hidden>↓</span>
             </a>
-            <a href="#contact" className="pill pill-solid hover:!bg-neon-magenta hover:!text-black">
+            <a href="#contact" className="pill pill-solid">
               Оценка за 24 часа <span aria-hidden>↗</span>
             </a>
           </motion.div>
         </motion.div>
-
-        {/* Нижняя техническая подпись */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="hidden pb-8 lg:block"
-        >
-          <div className="meta leading-5">
-            <Clock />
-            <br />
-            frontend
-            <br />
-            portfolio
-          </div>
-          <Barcode seed={7} className="mt-3 text-white/75" />
-        </motion.div>
       </div>
 
-      {/* Полоса статистики — на волосяных линиях, во всю ширину */}
+      {/* Нижняя техническая подпись */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+        className="container-x relative z-10 hidden pb-8 lg:block"
+      >
+        <div className="meta leading-5">
+          <Clock />
+          <br />
+          frontend
+          <br />
+          portfolio
+        </div>
+        <Barcode seed={7} className="mt-3 text-white/70" />
+      </motion.div>
+
+      {/* Полоса статистики */}
       <div className="relative z-10 rule-t">
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {site.stats.map((s, i) => (
             <div
               key={s.label}
-              className={`px-5 py-6 sm:px-8 ${i > 0 ? 'lg:rule-l' : ''} ${i % 2 === 1 ? 'rule-l lg:rule-l' : ''} ${
-                i < 2 ? 'rule-b lg:border-b-0' : ''
-              }`}
+              className={`px-5 py-6 sm:px-8 ${i % 2 === 1 ? 'rule-l' : ''} ${
+                i > 0 ? 'lg:rule-l' : ''
+              } ${i < 2 ? 'rule-b lg:border-b-0' : ''}`}
             >
               <p className="font-mono text-2xl font-light text-white sm:text-3xl">
                 <Counter

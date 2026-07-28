@@ -84,7 +84,7 @@ export default function StructureModal({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="min-w-0">
-            <p className="font-mono text-[11px] uppercase tracking-mega text-neon-magenta">
+            <p className="font-mono text-[11px] uppercase tracking-mega text-white/45">
               Структура проекта
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1 text-sm text-slate-300">
@@ -107,7 +107,7 @@ export default function StructureModal({
           <button
             onClick={onClose}
             aria-label="Закрыть"
-            className="grid h-10 w-10 flex-shrink-0 place-items-center border border-white/20 text-white/70 transition-colors hover:border-neon-magenta hover:text-white"
+            className="grid h-10 w-10 flex-shrink-0 place-items-center border border-white/20 text-white/70 transition-colors hover:border-white/60 hover:text-white"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />
@@ -128,15 +128,15 @@ export default function StructureModal({
           {/* Подсказка */}
           <div className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 text-center text-xs text-slate-400">
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm">
-              Вращайте мышью · клик по <span className="text-cyan-300">папке</span> — открыть
-              {path.length > 0 && <> · <span className="text-fuchsia-300">кольцо</span> — назад</>}
+              Вращайте мышью · клик по <span className="text-white">папке</span> — открыть
+              {path.length > 0 && <> · <span className="text-white">кольцо</span> — назад</>}
             </span>
           </div>
 
           {/* Легенда */}
           <div className="pointer-events-none absolute right-5 top-4 hidden flex-col gap-1.5 text-xs text-slate-400 sm:flex">
-            <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-sm bg-cyan-400" /> папка</span>
-            <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-violet-400" /> файл</span>
+            <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-sm bg-white" /> папка</span>
+            <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-white/50" /> файл</span>
           </div>
         </div>
       </motion.div>

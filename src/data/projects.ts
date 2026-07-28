@@ -12,8 +12,9 @@ export interface Project {
   demoUrl?: string;
   /** Ссылка на репозиторий (сейчас в интерфейсе не используется). */
   codeUrl?: string;
-  /** Тип встроенного макета интерфейса */
-  mockup: 'dashboard' | 'shop' | 'calc';
+  /** 👉 КАРТИНКА ПРОЕКТА. Положите файл в `public/` и укажите путь,
+   *  например './works/autudash.webp'. Пока не задана — рисуется штриховка. */
+  image?: string;
   accent: string;
 }
 
@@ -36,7 +37,6 @@ export const projects: Project[] = [
     ],
     demoUrl: 'https://joedo-true.github.io/-AutuDash-CRM/',
     codeUrl: 'https://github.com/Joedo-true/-AutuDash-CRM',
-    mockup: 'dashboard',
     accent: '#8B5CF6',
   },
   {
@@ -57,7 +57,6 @@ export const projects: Project[] = [
     ],
     demoUrl: 'https://joedo-true.github.io/-sollers-shop/',
     codeUrl: 'https://github.com/Joedo-true/-sollers-shop',
-    mockup: 'shop',
     accent: '#10B981',
   },
   {
@@ -78,7 +77,6 @@ export const projects: Project[] = [
     ],
     demoUrl: 'https://joedo-true.github.io/FlexiCalc/',
     codeUrl: 'https://github.com/Joedo-true/FlexiCalc',
-    mockup: 'calc',
     accent: '#D946EF',
   },
 ];

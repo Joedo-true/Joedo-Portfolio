@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { site } from '../data/site';
 import { SectionHeading } from './ui/SectionHeading';
 import { Barcode } from './ui/Barcode';
+import { WarpGridSVG } from './ui/WarpGridSVG';
 
 interface FieldProps {
   id: string;
@@ -16,7 +17,7 @@ interface FieldProps {
 /** Поле ввода без «карточек»: только волосяная линия снизу */
 function Field({ id, label, hint, type = 'text', textarea, value, onChange }: FieldProps) {
   const shared =
-    'w-full bg-transparent px-0 py-3 font-mono text-sm text-white outline-none placeholder:text-white/25 border-b transition-colors focus:border-neon-magenta';
+    'w-full bg-transparent px-0 py-3 font-mono text-sm text-white outline-none placeholder:text-white/25 border-b transition-colors focus:border-white/70';
   return (
     <div className="py-5">
       <label htmlFor={id} className="paren-label block">
@@ -67,7 +68,7 @@ export function Contact() {
     <section id="contact" className="relative rule-t py-20 sm:py-28">
       <div className="container-x">
         <SectionHeading
-          title="Контакты"
+          title="Contact"
           label="Get in touch"
           seed={43}
           intro="Опишите задачу в двух словах — вернусь с идеями, планом и оценкой в течение 24 часов. Бесплатно и ни к чему не обязывает."
@@ -106,7 +107,7 @@ export function Contact() {
             <div className="mt-8 flex flex-wrap items-center gap-5">
               <button
                 type="submit"
-                className="pill pill-solid hover:!bg-neon-magenta hover:!text-black"
+                className="pill pill-solid "
               >
                 {sent ? 'Открываю почту…' : 'Отправить заявку'} <span aria-hidden>↗</span>
               </button>
@@ -117,12 +118,15 @@ export function Contact() {
           </form>
 
           {/* Прямые каналы */}
-          <div className="rule-t lg:rule-l lg:border-t-0">
+          <div className="relative rule-t lg:rule-l lg:border-t-0">
+            <div className="pointer-events-none absolute inset-0 text-white">
+              <WarpGridSVG className="h-full w-full" cols={26} rows={18} amp={18} opacity={0.26} />
+            </div>
             <a
               href={site.telegram.url}
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center justify-between gap-4 px-5 py-8 transition-colors hover:bg-white/[0.03] sm:px-8 lg:px-12"
+              className="group relative flex items-center justify-between gap-4 px-5 py-8 transition-colors hover:bg-white/[0.03] sm:px-8 lg:px-12"
             >
               <span>
                 <span className="block font-mono text-base uppercase tracking-[0.08em] text-white">
@@ -134,7 +138,7 @@ export function Contact() {
               </span>
               <span
                 aria-hidden
-                className="text-lg text-white/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-neon-magenta"
+                className="text-lg text-white/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white"
               >
                 ↗
               </span>
@@ -142,7 +146,7 @@ export function Contact() {
 
             <a
               href={`mailto:${site.email}`}
-              className="group flex items-center justify-between gap-4 px-5 py-8 rule-t transition-colors hover:bg-white/[0.03] sm:px-8 lg:px-12"
+              className="group relative flex items-center justify-between gap-4 px-5 py-8 rule-t transition-colors hover:bg-white/[0.03] sm:px-8 lg:px-12"
             >
               <span className="min-w-0">
                 <span className="block font-mono text-base uppercase tracking-[0.08em] text-white">
@@ -154,13 +158,13 @@ export function Contact() {
               </span>
               <span
                 aria-hidden
-                className="text-lg text-white/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-neon-magenta"
+                className="text-lg text-white/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white"
               >
                 ↗
               </span>
             </a>
 
-            <div className="rule-t px-5 py-8 sm:px-8 lg:px-12">
+            <div className="relative rule-t px-5 py-8 sm:px-8 lg:px-12">
               <Barcode seed={57} className="text-white/70" />
               <p className="meta mt-3 !normal-case !tracking-normal">
                 Предпочитаете мессенджеры? Напишите в один клик — так быстрее.

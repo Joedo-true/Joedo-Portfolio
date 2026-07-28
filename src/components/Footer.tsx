@@ -9,7 +9,7 @@ export function Footer() {
         <div>
           <a href="#top" className="font-mono text-sm uppercase tracking-mega text-white">
             {site.name}
-            <span className="text-neon-magenta">.dev</span>
+            <span className="text-white/45">.dev</span>
           </a>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/45">
             Фронтенд-разработка интерфейсов на React, которые работают на результат.

@@ -28,7 +28,7 @@
   }
 
   ::selection {
-    @apply bg-neon-magenta text-black;
+    @apply bg-white text-black;
   }
 
   ::-webkit-scrollbar {
@@ -42,7 +42,7 @@
     background: rgba(255, 255, 255, 0.16);
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-neon-magenta;
+    background: rgba(255, 255, 255, 0.4);
   }
 
   section[id] {
@@ -51,7 +51,7 @@
 
   /* Видимый фокус с клавиатуры — на неоне читается всегда */
   :focus-visible {
-    outline: 2px solid theme('colors.neon.magenta');
+    outline: 2px solid #fff;
     outline-offset: 2px;
   }
 }

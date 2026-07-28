@@ -1,13 +1,18 @@
 import { motion } from 'framer-motion';
 import { services } from '../data/services';
 import { SectionHeading } from './ui/SectionHeading';
+import { WarpGridSVG } from './ui/WarpGridSVG';
 
 export function Services() {
   return (
     <section id="services" className="relative rule-t py-20 sm:py-28">
-      <div className="container-x">
+      {/* Сетка-фон в правой половине шапки секции */}
+      <div className="pointer-events-none absolute right-0 top-0 hidden h-[22rem] w-1/2 text-white lg:block">
+        <WarpGridSVG className="h-full w-full" cols={40} rows={16} amp={22} opacity={0.3} />
+      </div>
+      <div className="container-x relative">
         <SectionHeading
-          title="Услуги"
+          title="Services"
           label="What I build"
           seed={3}
           intro="Не «сайт ради сайта», а инструмент под конкретную бизнес-задачу. Выберите формат — остальное беру на себя: от структуры до деплоя."
@@ -31,12 +36,7 @@ export function Services() {
                 <span className="font-mono text-[11px] tracking-mega text-white/35">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span
-                  className="chip shrink-0"
-                  style={{ color: s.accent, borderColor: `${s.accent}66` }}
-                >
-                  {s.outcome}
-                </span>
+                <span className="chip shrink-0">{s.outcome}</span>
               </div>
 
               <h3 className="mt-7 font-mono text-xl font-normal uppercase tracking-[0.04em] text-white sm:text-2xl">
@@ -48,17 +48,14 @@ export function Services() {
               <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
                 {s.deliverables.map((d) => (
                   <li key={d} className="meta !normal-case !tracking-normal flex items-center gap-2">
-                    <i className="h-1 w-1 shrink-0" style={{ background: s.accent }} />
+                    <i className="h-px w-3 shrink-0 bg-white/30" />
                     {d}
                   </li>
                 ))}
               </ul>
 
-              {/* Полоска акцента, проявляющаяся при наведении */}
-              <span
-                className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 transition-transform duration-500 group-hover:scale-x-100"
-                style={{ background: s.accent }}
-              />
+              {/* Линия, подтверждающая наведение на ячейку */}
+              <span className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-white/50 transition-transform duration-500 group-hover:scale-x-100" />
             </motion.article>
           ))}
         </div>

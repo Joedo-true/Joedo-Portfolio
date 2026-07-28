@@ -13,11 +13,11 @@ export const site = {
     url: 'https://github.com/joedo-true',
   },
   nav: [
-    { id: 'services', label: 'Услуги' },
-    { id: 'projects', label: 'Кейсы' },
-    { id: 'stack', label: 'Стек' },
-    { id: 'process', label: 'Процесс' },
-    { id: 'contact', label: 'Контакты' },
+    { id: 'services', label: 'Services' },
+    { id: 'projects', label: 'Works' },
+    { id: 'stack', label: 'Skills' },
+    { id: 'process', label: 'Process' },
+    { id: 'contact', label: 'Contact' },
   ],
   // Плейсхолдеры — отредактируйте под свою реальную статистику
   stats: [
