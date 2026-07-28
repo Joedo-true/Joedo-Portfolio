@@ -7,9 +7,8 @@ import { useEffect, useRef } from 'react';
  * складывается из двух концентрических источников ряби (волны расходятся
  * кругами и затухают с расстоянием) и пологой диагональной зыби.
  *
- * При `interactive` добавляется указатель: рядом с курсором узлы
- * расталкиваются, а само движение курсора роняет в поле кольцевые волны —
- * получается, что линии цепляешь и они расходятся кругами.
+ * При `interactive` добавляется указатель: узлы внутри небольшого круга под
+ * курсором расступаются — линии цепляются за мышь, но след за ней не тянется.
  *
  * Рисуется на canvas: 45+ ломаных пересчитываются каждый кадр, в SVG это
  * означало бы столько же обновлений DOM. Кадры не идут, пока блок за
@@ -36,7 +35,7 @@ export function WaveGrid({
   fade?: boolean;
   /** false — один статичный кадр, цикл анимации не запускается вовсе */
   animated?: boolean;
-  /** Реакция на курсор: расталкивание узлов и кольцевые волны от движения */
+  /** Реакция на курсор: узлы расступаются в круге под мышью */
   interactive?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -71,26 +70,12 @@ export function WaveGrid({
     };
 
     // ——— Указатель ———
-    // Курсор ведём с запаздыванием: сетка тянется за ним, а не дёргается
+    // Курсор ведём с запаздыванием: сетка тянется за ним, а не дёргается.
+    // Никаких расходящихся колец — только локальный круг под курсором,
+    // иначе за мышью тянется след с заметным «хвостом».
     const ptr = { x: 0, y: 0, tx: 0, ty: 0, inside: false, held: false };
-    const PUSH_R = 170; // радиус расталкивания
-    const PUSH = 26; // сила расталкивания, px
-
-    // ——— Кольцевые волны от движения курсора ———
-    type Ring = { x: number; y: number; born: number };
-    const rings: Ring[] = [];
-    const RING_MAX = 7;
-    const RING_LIFE = 2.4; // с
-    const RING_SPEED = 220; // px/с — скорость фронта
-    const RING_WIDTH = 42; // толщина кольца
-    const RING_AMP = 30;
-    let lastDrop = { x: -1e4, y: -1e4 };
-
-    const dropRing = (x: number, y: number, now: number) => {
-      rings.push({ x, y, born: now });
-      if (rings.length > RING_MAX) rings.shift();
-      lastDrop = { x, y };
-    };
+    const PUSH_R = 120; // радиус круга воздействия
+    const PUSH = 11; // сила расталкивания, px
 
     const onMove = (e: PointerEvent) => {
       const r = wrap.getBoundingClientRect();
@@ -100,10 +85,6 @@ export function WaveGrid({
       if (!ptr.inside) return;
       ptr.tx = x;
       ptr.ty = y;
-      // Ронять кольцо не чаще, чем раз в ~60px пути — иначе поле «зашумится»
-      if (Math.hypot(x - lastDrop.x, y - lastDrop.y) > 60) {
-        dropRing(x, y, performance.now() / 1000);
-      }
     };
     const onDown = (e: PointerEvent) => {
       const r = wrap.getBoundingClientRect();
@@ -111,7 +92,6 @@ export function WaveGrid({
       const y = e.clientY - r.top;
       if (x < 0 || y < 0 || x > r.width || y > r.height) return;
       ptr.held = true;
-      dropRing(x, y, performance.now() / 1000);
     };
     const onUp = () => {
       ptr.held = false;
@@ -133,12 +113,8 @@ export function WaveGrid({
       { x: 0.78, y: 0.68, k: 0.042, w: -1.1, a: 0.85 },
     ];
 
-    /**
-     * Смещение узла (px).
-     * `t` — время поля ряби (своё, с учётом speed), `tAbs` — абсолютные
-     * секунды: кольца рождаются по часам указателя, а не по таймеру сцены.
-     */
-    const offset = (px: number, py: number, t: number, tAbs: number): [number, number] => {
+    /** Смещение узла (px). `t` — время поля ряби, с учётом speed. */
+    const offset = (px: number, py: number, t: number): [number, number] => {
       let dx = 0;
       let dy = 0;
 
@@ -169,29 +145,10 @@ export function WaveGrid({
         const vy = py - ptr.y;
         const d = Math.hypot(vx, vy) || 1;
         if (d < PUSH_R) {
-          const f = (1 - d / PUSH_R) ** 2 * PUSH * (ptr.held ? 2.1 : 1);
+          const f = (1 - d / PUSH_R) ** 2 * PUSH * (ptr.held ? 1.5 : 1);
           dx += (vx / d) * f;
           dy += (vy / d) * f;
         }
-      }
-
-      // Кольцевые волны от движения
-      for (let i = 0; i < rings.length; i++) {
-        const rg = rings[i];
-        const age = tAbs - rg.born;
-        if (age < 0 || age > RING_LIFE) continue;
-        const vx = px - rg.x;
-        const vy = py - rg.y;
-        const d = Math.hypot(vx, vy) || 1;
-        const front = age * RING_SPEED;
-        const off = d - front;
-        if (off > RING_WIDTH * 3 || off < -RING_WIDTH * 3) continue; // вне кольца
-        // Лоренциан вместо exp — дешевле, форма та же
-        const band = 1 / (1 + (off / RING_WIDTH) ** 2);
-        const decay = 1 - age / RING_LIFE;
-        const wv = Math.sin(off * 0.05) * band * decay * decay;
-        dx += (vx / d) * wv * RING_AMP;
-        dy += (vy / d) * wv * RING_AMP;
       }
 
       return [dx, dy];
@@ -202,15 +159,12 @@ export function WaveGrid({
     let running = true;
 
     const draw = (now: number) => {
-      const tSec = now / 1000;
       const t = still ? STATIC_T : ((now - start) / 1000) * speed;
 
       // Курсор догоняет цель — сглаживает рывки мыши
       if (live) {
         ptr.x += (ptr.tx - ptr.x) * 0.16;
         ptr.y += (ptr.ty - ptr.y) * 0.16;
-        // Отжившие кольца выбрасываем
-        while (rings.length && tSec - rings[0].born > RING_LIFE) rings.shift();
       }
 
       ctx.clearRect(0, 0, w, h);
@@ -226,7 +180,7 @@ export function WaveGrid({
         for (let c = 0; c <= cols; c++) {
           const x0 = c * stepX;
           const y0 = r * stepY;
-          const [dx, dy] = offset(x0, y0, still ? STATIC_T : t, tSec);
+          const [dx, dy] = offset(x0, y0, still ? STATIC_T : t);
           const i = r * (cols + 1) + c;
           px[i] = x0 + dx;
           py[i] = y0 + dy;
