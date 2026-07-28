@@ -1,9 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
-/** Глобальное нормализованное положение курсора (-1…1), без ре-рендеров React */
+/** Нормализованное положение курсора (-1…1) без ре-рендеров React */
 function usePointerRef() {
   const ref = useRef({ x: 0, y: 0 });
   useEffect(() => {
@@ -17,93 +16,85 @@ function usePointerRef() {
   return ref;
 }
 
-function AccentSolid({
-  position,
-  color,
-  geo,
-  scale = 1,
-}: {
-  position: [number, number, number];
-  color: string;
-  geo: 'octa' | 'tetra' | 'torus' | 'box';
-  scale?: number;
-}) {
-  const mesh = useRef<THREE.Mesh>(null);
-  useFrame((_, delta) => {
-    if (!mesh.current) return;
-    mesh.current.rotation.x += delta * 0.4;
-    mesh.current.rotation.y += delta * 0.55;
+/**
+ * Искривлённая проволочная плоскость — сигнатурный объект оформления.
+ * Вершины смещаются двумя синусоидами: получается «текучая» сетка,
+ * лежащая в перспективе. Смещение считается на CPU по буферу вершин —
+ * это дёшево при такой плотности и не требует кастомных шейдеров.
+ */
+function WarpMesh({ pointer }: { pointer: React.MutableRefObject<{ x: number; y: number }> }) {
+  const SEG_X = 48;
+  const SEG_Y = 26;
+
+  const geometry = useMemo(() => new THREE.PlaneGeometry(15, 8, SEG_X, SEG_Y), []);
+  const base = useMemo(() => Float32Array.from(geometry.attributes.position.array), [geometry]);
+  const mesh = useRef<THREE.LineSegments>(null);
+  const group = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const pos = geometry.attributes.position;
+    const arr = pos.array as Float32Array;
+
+    for (let i = 0; i < arr.length; i += 3) {
+      const x = base[i];
+      const y = base[i + 1];
+      // Две бегущие волны разной частоты — «ткань» без явного повтора
+      const z =
+        Math.sin(x * 0.55 + t * 0.5) * 0.5 +
+        Math.sin(y * 0.9 - t * 0.35) * 0.32 +
+        Math.sin((x + y) * 0.32 + t * 0.22) * 0.28;
+      arr[i + 2] = z;
+    }
+    pos.needsUpdate = true;
+
+    if (group.current) {
+      const p = pointer.current;
+      // Мягкий доворот к курсору
+      group.current.rotation.x = THREE.MathUtils.lerp(
+        group.current.rotation.x,
+        -1.02 + p.y * 0.12,
+        0.05,
+      );
+      group.current.rotation.z = THREE.MathUtils.lerp(group.current.rotation.z, p.x * 0.1, 0.05);
+    }
   });
+
+  const wireframe = useMemo(() => new THREE.WireframeGeometry(geometry), [geometry]);
+
   return (
-    <Float speed={2.2} rotationIntensity={0.6} floatIntensity={1}>
-      <mesh ref={mesh} position={position} scale={scale}>
-        {geo === 'octa' && <octahedronGeometry args={[0.5, 0]} />}
-        {geo === 'tetra' && <tetrahedronGeometry args={[0.55, 0]} />}
-        {geo === 'torus' && <torusGeometry args={[0.42, 0.16, 16, 40]} />}
-        {geo === 'box' && <boxGeometry args={[0.6, 0.6, 0.6]} />}
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={0.35}
-          metalness={0.35}
-          roughness={0.25}
-          flatShading
-        />
-      </mesh>
-    </Float>
+    <group ref={group} rotation={[-1.02, 0, 0]} position={[0, -0.4, 0]}>
+      <lineSegments ref={mesh} geometry={wireframe}>
+        <lineBasicMaterial color="#ffffff" transparent opacity={0.22} />
+      </lineSegments>
+    </group>
   );
 }
 
-function Crystal({ pointer }: { pointer: React.MutableRefObject<{ x: number; y: number }> }) {
-  const group = useRef<THREE.Group>(null);
-  const core = useRef<THREE.Mesh>(null);
-  const cage = useRef<THREE.Mesh>(null);
-
-  useFrame((_, delta) => {
-    const p = pointer.current;
-    if (group.current) {
-      // Мягко доворачиваем сцену к курсору
-      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, p.x * 0.5, 0.045);
-      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, -p.y * 0.35, 0.045);
-    }
-    if (core.current) {
-      core.current.rotation.y += delta * 0.12;
-      core.current.rotation.z += delta * 0.05;
-    }
-    if (cage.current) {
-      cage.current.rotation.y -= delta * 0.08;
-      cage.current.rotation.x += delta * 0.04;
-    }
+/** Парящая грань-осколок: плоский неоновый контур, без свечения */
+function Shard({
+  position,
+  color,
+  size = 0.5,
+  speed = 1,
+}: {
+  position: [number, number, number];
+  color: string;
+  size?: number;
+  speed?: number;
+}) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    ref.current.rotation.x += delta * 0.25 * speed;
+    ref.current.rotation.y += delta * 0.32 * speed;
+    ref.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.6 * speed) * 0.22;
   });
-
   return (
-    <group ref={group}>
-      {/* Светящееся «ядро» — морфящийся икосаэдр */}
-      <mesh ref={core}>
-        <icosahedronGeometry args={[1.55, 20]} />
-        <MeshDistortMaterial
-          color="#6D5AE6"
-          emissive="#3B1D8F"
-          emissiveIntensity={0.55}
-          roughness={0.22}
-          metalness={0.28}
-          distort={0.34}
-          speed={1.5}
-        />
-      </mesh>
-
-      {/* Каркас-«клетка» — техно-оболочка */}
-      <mesh ref={cage} scale={1.001}>
-        <icosahedronGeometry args={[2.05, 1]} />
-        <meshBasicMaterial color="#8B5CF6" wireframe transparent opacity={0.22} />
-      </mesh>
-
-      {/* Плавающие акцентные фигуры */}
-      <AccentSolid position={[2.35, 1.15, -1]} color="#22D3EE" geo="octa" />
-      <AccentSolid position={[-2.4, -1, -0.5]} color="#D946EF" geo="tetra" scale={1.05} />
-      <AccentSolid position={[2.0, -1.55, 0.5]} color="#8B5CF6" geo="torus" scale={0.85} />
-      <AccentSolid position={[-2.15, 1.5, -1.5]} color="#6366F1" geo="box" scale={0.65} />
-    </group>
+    <mesh ref={ref} position={position}>
+      <tetrahedronGeometry args={[size, 0]} />
+      <meshBasicMaterial color={color} wireframe />
+    </mesh>
   );
 }
 
@@ -112,22 +103,20 @@ export default function Scene3D() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 9.2], fov: 42 }}
+      camera={{ position: [0, 0, 7.4], fov: 42 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       style={{
         pointerEvents: 'none',
-        // Мягкое затухание у боковых краёв канваса: фигуры, дошедшие до
-        // границы, плавно растворяются, а не обрезаются жёстким прямоугольником.
-        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
-        maskImage: 'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
+        // Края растворяются, чтобы сетка не обрезалась рамкой канваса
+        WebkitMaskImage:
+          'radial-gradient(ellipse 78% 76% at 50% 50%, #000 46%, transparent 100%)',
+        maskImage: 'radial-gradient(ellipse 78% 76% at 50% 50%, #000 46%, transparent 100%)',
       }}
     >
-      <ambientLight intensity={0.65} />
-      <directionalLight position={[5, 6, 5]} intensity={1.1} />
-      <pointLight position={[-7, -3, -3]} color="#D946EF" intensity={2.6} decay={0} />
-      <pointLight position={[7, 4, 2]} color="#22D3EE" intensity={2.1} decay={0} />
-      <pointLight position={[0, 0, 4]} color="#8B5CF6" intensity={1.2} decay={0} />
-      <Crystal pointer={pointer} />
+      <WarpMesh pointer={pointer} />
+      <Shard position={[2.6, 1.3, 1]} color="#FF3DAF" size={0.42} />
+      <Shard position={[-2.9, 0.9, 0.6]} color="#3B5BFF" size={0.34} speed={1.3} />
+      <Shard position={[2.1, -1.5, 1.4]} color="#C6FF3D" size={0.26} speed={0.8} />
     </Canvas>
   );
 }

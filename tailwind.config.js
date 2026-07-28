@@ -5,39 +5,38 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        // Моноширинный — доминирующая гарнитура всего интерфейса (сигнатура стиля)
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        // Inter — только для длинных абзацев на русском (читаемость на малых кеглях)
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Глубокий графит / near-black для «музейной» тёмной темы
-        ink: {
-          950: '#06070C',
-          900: '#0B0E17',
-          850: '#0F1320',
-          800: '#161B2B',
-          700: '#232A3D',
-          600: '#333B52',
+        // Плоский near-black — фон-«терминал», на нём читается неон
+        base: {
+          950: '#08080A',
+          900: '#0B0B0D',
+          850: '#101013',
+          800: '#16161A',
+          700: '#1E1E24',
         },
-        // Молочно-белый для светлой темы (чистая галерея)
-        cream: {
-          50: '#FCFCFD',
-          100: '#F6F7FA',
-          200: '#EDF0F5',
+        // Светлая тема — «бумажный» аналог того же каркаса
+        paper: {
+          50: '#FFFFFF',
+          100: '#F4F4F2',
+          200: '#E7E7E4',
         },
-        brand: {
-          violet: '#8B5CF6',
-          indigo: '#6366F1',
-          fuchsia: '#D946EF',
+        // Плоские неоновые акценты (без градиентов)
+        neon: {
+          magenta: '#FF3DAF',
+          blue: '#3B5BFF',
+          lav: '#A78BFA',
           cyan: '#22D3EE',
-          emerald: '#10B981',
+          acid: '#C6FF3D',
         },
       },
-      boxShadow: {
-        glow: '0 24px 70px -18px rgba(139, 92, 246, 0.5)',
-        'glow-sm': '0 10px 34px -10px rgba(139, 92, 246, 0.55)',
-        'glow-cyan': '0 24px 70px -18px rgba(34, 211, 238, 0.4)',
-        card: '0 30px 80px -40px rgba(0, 0, 0, 0.6)',
-        'inner-hi': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.08)',
+      letterSpacing: {
+        mega: '0.18em',
+        ultra: '0.28em',
       },
       keyframes: {
         'pulse-ring': {
@@ -45,52 +44,34 @@ export default {
           '70%': { transform: 'scale(2.2)', opacity: '0' },
           '100%': { transform: 'scale(2.2)', opacity: '0' },
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-16px)' },
-        },
-        'float-slow': {
-          '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
-          '50%': { transform: 'translateY(-26px) translateX(10px)' },
-        },
-        'gradient-move': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
-        shimmer: { '100%': { transform: 'translateX(100%)' } },
         marquee: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
         },
-        'spin-slow': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+        // Тонкая строка развёртки, проходящая по секции
+        scan: {
+          '0%': { transform: 'translateY(-10%)', opacity: '0' },
+          '10%': { opacity: '1' },
+          '90%': { opacity: '1' },
+          '100%': { transform: 'translateY(1000%)', opacity: '0' },
         },
-        aurora: {
-          '0%, 100%': { transform: 'translate(0%, 0%) scale(1)' },
-          '33%': { transform: 'translate(6%, -8%) scale(1.15)' },
-          '66%': { transform: 'translate(-6%, 6%) scale(0.95)' },
+        // Мигающий терминальный курсор
+        caret: {
+          '0%, 45%': { opacity: '1' },
+          '50%, 95%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
-        'glow-pulse': {
-          '0%, 100%': { opacity: '0.5' },
-          '50%': { opacity: '1' },
-        },
-        'scan': {
-          '0%': { transform: 'translateY(-100%)' },
-          '100%': { transform: 'translateY(400%)' },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-12px)' },
         },
       },
       animation: {
-        'pulse-ring': 'pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        float: 'float 7s ease-in-out infinite',
-        'float-slow': 'float-slow 11s ease-in-out infinite',
-        'gradient-move': 'gradient-move 6s ease infinite',
-        shimmer: 'shimmer 1.6s infinite',
-        marquee: 'marquee 32s linear infinite',
-        'spin-slow': 'spin-slow 26s linear infinite',
-        aurora: 'aurora 18s ease-in-out infinite',
-        'glow-pulse': 'glow-pulse 4s ease-in-out infinite',
+        'pulse-ring': 'pulse-ring 2.4s cubic-bezier(0.4,0,0.6,1) infinite',
+        marquee: 'marquee 34s linear infinite',
         scan: 'scan 7s linear infinite',
+        caret: 'caret 1.1s step-end infinite',
+        float: 'float 8s ease-in-out infinite',
       },
     },
   },

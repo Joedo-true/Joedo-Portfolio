@@ -2,16 +2,12 @@ import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from '
 
 const Scene3D = lazy(() => import('./Scene3D'));
 
-/** Красивый статичный запасной вариант (нет WebGL / reduced-motion) */
+/** Статичный запасной вариант (нет WebGL / reduced-motion): плоская сетка */
 function OrbFallback() {
   return (
-    <div className="relative grid h-full w-full place-items-center">
-      <div className="relative h-64 w-64 sm:h-80 sm:w-80">
-        <div className="absolute inset-0 animate-glow-pulse rounded-full bg-gradient-to-br from-brand-violet via-brand-indigo to-brand-fuchsia blur-2xl opacity-60" />
-        <div className="absolute inset-6 rounded-full bg-gradient-to-br from-brand-indigo to-brand-violet shadow-glow" />
-        <div className="absolute inset-0 animate-spin-slow rounded-full border border-white/20" />
-        <div className="absolute -inset-6 animate-[spin-slow_40s_linear_infinite_reverse] rounded-full border border-brand-cyan/20" />
-      </div>
+    <div className="relative h-full w-full overflow-hidden">
+      <div className="warp-grid absolute inset-0 opacity-80" />
+      <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-neon-magenta/70" />
     </div>
   );
 }

@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    color-scheme: light;
-  }
-  html.dark {
     color-scheme: dark;
+    /* Толщина и цвет «волосяных» линий — каркас всей вёрстки */
+    --line: rgba(255, 255, 255, 0.14);
+    --line-soft: rgba(255, 255, 255, 0.07);
   }
 
   html {
@@ -15,152 +15,157 @@
   }
 
   body {
-    @apply bg-cream-50 text-ink-900 antialiased;
-    @apply dark:bg-ink-950 dark:text-slate-300;
-    font-feature-settings: 'cv11', 'ss01';
+    @apply bg-base-900 font-mono text-white antialiased;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
     overflow-x: hidden;
+    font-feature-settings: 'ss01', 'zero';
   }
 
-  /* Глубокий «музейный» фон в тёмной теме: слои радиальных пятен света */
-  html.dark body {
-    background-color: #06070c;
-    background-image:
-      radial-gradient(50rem 40rem at 15% -5%, rgba(99, 102, 241, 0.16), transparent 60%),
-      radial-gradient(45rem 40rem at 100% 8%, rgba(217, 70, 239, 0.12), transparent 60%),
-      radial-gradient(60rem 50rem at 50% 120%, rgba(34, 211, 238, 0.08), transparent 60%);
-    background-attachment: fixed;
-  }
-
-  ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-slate-300 dark:bg-ink-700;
-    border: 3px solid transparent;
-    background-clip: content-box;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-brand-violet;
-    background-clip: content-box;
+  /* Абзацы на русском — Inter: моноширинный на малом кегле читается тяжело */
+  p,
+  .prose-body {
+    @apply font-sans;
   }
 
   ::selection {
-    @apply bg-brand-violet/30 text-ink-950 dark:text-white;
+    @apply bg-neon-magenta text-black;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neon-magenta;
   }
 
   section[id] {
-    scroll-margin-top: 88px;
+    scroll-margin-top: 96px;
+  }
+
+  /* Видимый фокус с клавиатуры — на неоне читается всегда */
+  :focus-visible {
+    outline: 2px solid theme('colors.neon.magenta');
+    outline-offset: 2px;
   }
 }
 
 @layer components {
+  /* Полосы-разделители: вёрстка строится на них, а не на карточках с тенями */
+  .rule-t {
+    border-top: 1px solid var(--line);
+  }
+  .rule-b {
+    border-bottom: 1px solid var(--line);
+  }
+  .rule-l {
+    border-left: 1px solid var(--line);
+  }
+  .rule {
+    border: 1px solid var(--line);
+  }
+
   .container-x {
-    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+    @apply mx-auto w-full max-w-[1600px] px-5 sm:px-8;
   }
 
-  /* Градиентный текст-акцент */
-  .text-gradient {
-    @apply bg-gradient-to-r from-brand-violet via-brand-fuchsia to-brand-indigo bg-clip-text text-transparent;
-  }
-  .text-gradient-cool {
-    @apply bg-gradient-to-r from-brand-cyan via-brand-indigo to-brand-violet bg-clip-text text-transparent;
+  /* Метка секции в скобках, прижатая вправо */
+  .paren-label {
+    @apply font-mono text-[11px] uppercase tracking-mega text-white/45;
   }
 
-  /* Стеклянная панель шапки */
-  .glass {
-    @apply bg-white/70 dark:bg-ink-900/60 backdrop-blur-xl;
+  /* Мелкая техническая подпись/таймкод */
+  .meta {
+    @apply font-mono text-[11px] uppercase tracking-mega text-white/40;
   }
 
-  /* Панель-«экспонат»: стекло + тонкая внутренняя подсветка сверху */
-  .panel {
-    @apply rounded-3xl border border-slate-200/80 bg-white/70 shadow-card
-      dark:border-white/10 dark:bg-white/[0.03] dark:shadow-inner-hi backdrop-blur-md;
+  /* Кнопка-пилюля с тонкой рамкой */
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-5 py-2
+      font-mono text-[12px] uppercase tracking-mega transition-colors duration-200;
+    border-color: var(--line);
+  }
+  .pill:hover {
+    @apply border-white/70 bg-white text-black;
   }
 
-  /* Рамка с градиентом (для карточек/кнопок) */
-  .gradient-border {
-    position: relative;
-    isolation: isolate;
-  }
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.6), rgba(217, 70, 239, 0.3), rgba(34, 211, 238, 0.5));
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    z-index: -1;
+  /* Заполненная пилюля (активное состояние в навигации) */
+  .pill-solid {
+    @apply bg-white text-black;
   }
 
-  /* Слой единого «прожектора» внутри карточки (координаты задаёт SpotlightGroup).
-     Виден только на самой карточке (родитель — overflow-hidden), в промежутках нет. */
-  .spotlight-layer {
-    background: radial-gradient(
-      240px circle at var(--sx, -300px) var(--sy, -300px),
-      rgba(255, 255, 255, 0.1),
-      transparent 60%
-    );
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-  [data-active='true'] .spotlight-layer {
-    opacity: 1;
+  /* Чип-тег */
+  .chip {
+    @apply inline-flex items-center rounded-full border px-2.5 py-[3px]
+      font-mono text-[10px] uppercase tracking-mega text-white/70;
+    border-color: var(--line);
   }
 
-  /* Метка-«пилюля» над блоками (тег экспоната) */
-  .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-brand-violet/25 bg-brand-violet/10
-      px-3.5 py-1.5 font-mono text-[0.7rem] font-medium uppercase tracking-[0.2em] text-brand-indigo
-      dark:border-white/10 dark:bg-white/[0.04] dark:text-brand-violet;
+  /* Заголовок секции: тонкий, разрежённый, верхний регистр */
+  .display {
+    @apply font-mono font-normal uppercase leading-[0.92] tracking-[0.02em];
+    font-size: clamp(2.6rem, 7vw, 5.5rem);
+  }
+
+  /* Окно «файлового менеджера»: титульная строка + × */
+  .win {
+    border: 1px solid var(--line);
+    @apply bg-base-900;
+  }
+  .win-bar {
+    @apply flex items-center justify-between px-3 py-1.5 font-mono text-[11px] text-white/60;
+    border-bottom: 1px solid var(--line);
   }
 }
 
 @layer utilities {
-  .bg-grid {
-    background-image:
-      linear-gradient(to right, rgba(100, 116, 139, 0.08) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(100, 116, 139, 0.08) 1px, transparent 1px);
-    background-size: 58px 58px;
-  }
-  .dark .bg-grid {
-    background-image:
-      linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
-  }
-
-  .mask-fade-b {
-    -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-  }
-  .mask-fade-x {
-    -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
-    mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  /* Штрихкод — декоративный разделитель под заголовками */
+  .barcode {
+    height: 26px;
+    width: 108px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      currentColor 0 1px,
+      transparent 1px 3px,
+      currentColor 3px 5px,
+      transparent 5px 6px,
+      currentColor 6px 7px,
+      transparent 7px 10px,
+      currentColor 10px 13px,
+      transparent 13px 14px
+    );
+    opacity: 0.85;
   }
 
-  .perspective {
-    perspective: 1200px;
+  /* Искривлённая проволочная сетка — сигнатурный фон */
+  .warp-grid {
+    background-image:
+      repeating-linear-gradient(90deg, var(--line-soft) 0 1px, transparent 1px 34px),
+      repeating-linear-gradient(0deg, var(--line-soft) 0 1px, transparent 1px 34px);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 40%, transparent 100%);
   }
-  .preserve-3d {
-    transform-style: preserve-3d;
+
+  /* Диагональная штриховка для «пустых» ячеек сетки */
+  .hatch {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--line-soft) 0 1px,
+      transparent 1px 9px
+    );
   }
+
   .text-balance {
     text-wrap: balance;
   }
 }
 
-/* Уважаем настройку «уменьшить движение» */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

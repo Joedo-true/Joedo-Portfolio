@@ -1,182 +1,130 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTheme } from '../context/ThemeContext';
 import { site } from '../data/site';
 
-function Logo() {
+/** Знак-логотип: три штриха в квадрате */
+function LogoMark() {
   return (
     <a
       href="#top"
-      className="group inline-flex items-center font-mono text-lg font-bold tracking-tight"
-      aria-label={`${site.name}.dev — на главную`}
+      aria-label={`${site.name} — на главную`}
+      className="group grid h-9 w-9 shrink-0 place-items-center border border-white/25 transition-colors hover:border-neon-magenta"
     >
-      <span className="text-slate-400 transition-colors group-hover:text-brand-violet dark:text-slate-500">
-        [
-      </span>
-      <span className="text-ink-900 transition-colors group-hover:text-brand-violet dark:text-white dark:group-hover:text-brand-violet">
-        {site.name}
-      </span>
-      <span className="text-slate-400 transition-colors group-hover:text-brand-violet dark:text-slate-500">
-        ]
-      </span>
-      <span className="text-brand-indigo transition-colors group-hover:text-brand-fuchsia dark:text-brand-violet">
-        .dev
+      <span className="flex w-4 flex-col gap-[3px]">
+        <i className="h-[2px] w-full bg-white transition-colors group-hover:bg-neon-magenta" />
+        <i className="h-[2px] w-3/4 bg-white transition-colors group-hover:bg-neon-magenta" />
+        <i className="h-[2px] w-full bg-white transition-colors group-hover:bg-neon-magenta" />
       </span>
     </a>
   );
 }
 
-function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
-  return (
-    <button
-      type="button"
-      onClick={toggleTheme}
-      aria-label={isDark ? 'Включить светлую тему' : 'Включить тёмную тему'}
-      className="relative grid h-10 w-10 place-items-center rounded-full border border-slate-200
-        text-slate-600 transition-colors hover:border-brand-violet/50 hover:text-brand-violet
-        dark:border-ink-700 dark:text-slate-300 dark:hover:border-brand-violet/60"
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={theme}
-          initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
-          animate={{ rotate: 0, opacity: 1, scale: 1 }}
-          exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
-          transition={{ duration: 0.25 }}
-        >
-          {isDark ? <MoonIcon /> : <SunIcon />}
-        </motion.span>
-      </AnimatePresence>
-    </button>
-  );
-}
-
-const SunIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-  </svg>
-);
-
-const MoonIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-  </svg>
-);
-
 export function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [active, setActive] = useState<string>('top');
+  const [open, setOpen] = useState(false);
 
+  // Подсветка активного пункта по видимой секции
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const ids = ['top', ...site.nav.map((n) => n.id)];
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const vis = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (vis) setActive(vis.target.id);
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: [0.01, 0.25, 0.6] },
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
   }, []);
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'glass border-b border-slate-200/70 shadow-sm dark:border-ink-800/70'
-          : 'border-b border-transparent bg-transparent'
-      }`}
-    >
-      <nav className="container-x flex h-16 items-center justify-between">
-        <Logo />
-
-        {/* Центр: якорные ссылки (desktop) */}
-        <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex">
-          {site.nav.map((item) => (
-            <li key={item.id}>
-              <a
-                href={`#${item.id}`}
-                className="rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors
-                  hover:text-brand-indigo dark:text-slate-300 dark:hover:text-brand-violet"
-              >
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-
-        {/* Правая часть */}
-        <div className="flex items-center gap-2.5">
-          <ThemeToggle />
-
-          {/* Кнопка «Быстрая связь»: рамка плавно заполняется цветом */}
-          <a
-            href="#contact"
-            className="group relative hidden overflow-hidden rounded-full border border-brand-violet/60
-              px-5 py-2 text-sm font-semibold text-brand-indigo transition-colors duration-300
-              hover:text-white dark:text-brand-violet dark:hover:text-white sm:inline-flex"
-          >
-            <span
-              className="absolute inset-0 -z-0 origin-left scale-x-0 bg-gradient-to-r from-brand-violet to-brand-indigo
-                transition-transform duration-300 ease-out group-hover:scale-x-100"
-            />
-            <span className="relative z-10">Быстрая связь</span>
-          </a>
-
-          {/* Бургер (mobile) */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Меню"
-            aria-expanded={menuOpen}
-            className="grid h-10 w-10 place-items-center rounded-full border border-slate-200
-              text-slate-700 dark:border-ink-700 dark:text-slate-200 lg:hidden"
-          >
-            <div className="space-y-1.5">
-              <span
-                className={`block h-0.5 w-5 bg-current transition-transform ${menuOpen ? 'translate-y-2 rotate-45' : ''}`}
-              />
-              <span className={`block h-0.5 w-5 bg-current transition-opacity ${menuOpen ? 'opacity-0' : ''}`} />
-              <span
-                className={`block h-0.5 w-5 bg-current transition-transform ${menuOpen ? '-translate-y-2 -rotate-45' : ''}`}
-              />
-            </div>
-          </button>
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50">
+      <div className="flex items-start justify-between px-4 py-4 sm:px-6">
+        <div className="pointer-events-auto">
+          <LogoMark />
         </div>
-      </nav>
 
-      {/* Мобильное меню */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="glass overflow-hidden border-b border-slate-200/70 dark:border-ink-800/70 lg:hidden"
+        {/* Центральная плавающая навигация-пилюля */}
+        <nav className="pointer-events-auto absolute left-1/2 hidden -translate-x-1/2 lg:block">
+          <ul
+            className="flex items-center gap-1 rounded-full border bg-base-900/85 p-1 backdrop-blur-md"
+            style={{ borderColor: 'var(--line)' }}
           >
-            <ul className="container-x flex flex-col gap-1 py-4">
-              {site.nav.map((item) => (
+            {site.nav.map((item) => {
+              const isActive = active === item.id;
+              return (
                 <li key={item.id}>
                   <a
                     href={`#${item.id}`}
-                    onClick={() => setMenuOpen(false)}
-                    className="block rounded-lg px-4 py-3 text-base font-medium text-slate-700
-                      transition-colors hover:bg-brand-violet/10 hover:text-brand-indigo
-                      dark:text-slate-200 dark:hover:text-brand-violet"
+                    className={`block rounded-full px-4 py-1.5 font-mono text-[12px] uppercase tracking-mega transition-colors ${
+                      isActive ? 'bg-white text-black' : 'text-white/60 hover:text-white'
+                    }`}
                   >
                     {item.label}
                   </a>
                 </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="pointer-events-auto flex items-center gap-2">
+          <a
+            href={site.telegram.url}
+            target="_blank"
+            rel="noreferrer"
+            className="pill hidden h-9 sm:inline-flex"
+          >
+            Telegram <span aria-hidden>↗</span>
+          </a>
+          <a href="#contact" className="pill hidden h-9 md:inline-flex">
+            Связаться <span aria-hidden>↗</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Меню"
+            aria-expanded={open}
+            className="grid h-9 w-9 place-items-center border border-white/25 lg:hidden"
+          >
+            <span className="flex w-4 flex-col gap-[3px]">
+              <i className={`h-[2px] w-full bg-white transition-transform ${open ? 'translate-y-[5px] rotate-45' : ''}`} />
+              <i className={`h-[2px] w-full bg-white transition-opacity ${open ? 'opacity-0' : ''}`} />
+              <i className={`h-[2px] w-full bg-white transition-transform ${open ? '-translate-y-[5px] -rotate-45' : ''}`} />
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="pointer-events-auto mx-4 border bg-base-900/95 backdrop-blur-md lg:hidden"
+            style={{ borderColor: 'var(--line)' }}
+          >
+            <ul>
+              {site.nav.map((item, i) => (
+                <li key={item.id} className={i > 0 ? 'rule-t' : ''}>
+                  <a
+                    href={`#${item.id}`}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-between px-5 py-3.5 font-mono text-[13px] uppercase tracking-mega text-white/80"
+                  >
+                    {item.label}
+                    <span aria-hidden className="text-white/30">→</span>
+                  </a>
+                </li>
               ))}
-              <li>
-                <a
-                  href="#contact"
-                  onClick={() => setMenuOpen(false)}
-                  className="mt-1 block rounded-lg bg-gradient-to-r from-brand-violet to-brand-indigo
-                    px-4 py-3 text-center text-base font-semibold text-white"
-                >
-                  Быстрая связь
-                </a>
-              </li>
             </ul>
           </motion.div>
         )}

@@ -6,20 +6,26 @@ import { Skills } from './components/Skills';
 import { Workflow } from './components/Workflow';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
-import { Marquee } from './components/ui/Marquee';
-import { GrainOverlay } from './components/ui/GrainOverlay';
-import { CustomCursor } from './components/ui/CustomCursor';
+import { ScanlineOverlay } from './components/ui/ScanlineOverlay';
 import { site } from './data/site';
 
+/** Бегущая строка — единственный постоянно движущийся элемент между секциями */
 function MarqueeBand() {
-  const items = site.marquee.map((t) => (
-    <span className="text-lg font-semibold tracking-tight text-slate-500 dark:text-slate-400 sm:text-xl">
-      {t}
-    </span>
-  ));
+  const items = [...site.marquee, ...site.marquee];
   return (
-    <div className="relative border-y border-slate-200/70 py-6 dark:border-white/10">
-      <Marquee items={items} />
+    <div className="rule-t overflow-hidden py-4">
+      <div className="flex w-max animate-marquee items-center">
+        {items.map((t, i) => (
+          <span key={i} className="flex items-center whitespace-nowrap">
+            <span className="px-6 font-mono text-[12px] uppercase tracking-mega text-white/45">
+              {t}
+            </span>
+            <span aria-hidden className="text-neon-magenta">
+              ◆
+            </span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -38,8 +44,7 @@ export default function App() {
         <Contact />
       </main>
       <Footer />
-      <GrainOverlay />
-      <CustomCursor />
+      <ScanlineOverlay />
     </div>
   );
 }

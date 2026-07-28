@@ -1,34 +1,38 @@
 import type { ReactNode } from 'react';
-import { Reveal } from './Reveal';
+import { Barcode } from './Barcode';
 
-interface SectionHeadingProps {
-  eyebrow: string;
-  title: ReactNode;
-  subtitle?: ReactNode;
-  align?: 'left' | 'center';
-}
-
-export function SectionHeading({ eyebrow, title, subtitle, align = 'center' }: SectionHeadingProps) {
+/**
+ * Заголовок секции: крупный тонкий верхний регистр с мигающим терминальным
+ * курсором, под ним — штрихкод. Справа — метка в скобках.
+ */
+export function SectionHeading({
+  title,
+  label,
+  seed = 1,
+  intro,
+}: {
+  /** Крупный заголовок (латиница/кириллица, выводится как есть) */
+  title: string;
+  /** Метка в скобках справа, например SCHEDULE */
+  label?: string;
+  seed?: number;
+  intro?: ReactNode;
+}) {
   return (
-    <div className={`flex flex-col ${align === 'center' ? 'items-center text-center' : 'items-start text-left'}`}>
-      <Reveal>
-        <span className="eyebrow">{eyebrow}</span>
-      </Reveal>
-      <Reveal delay={0.05}>
-        <h2 className="mt-4 max-w-2xl text-balance text-3xl font-extrabold tracking-tight text-ink-950 dark:text-white sm:text-4xl md:text-[2.75rem]">
-          {title}
-        </h2>
-      </Reveal>
-      {subtitle && (
-        <Reveal delay={0.1}>
-          <p
-            className={`mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300 ${
-              align === 'center' ? 'mx-auto' : ''
-            }`}
-          >
-            {subtitle}
-          </p>
-        </Reveal>
+    <div className="relative">
+      <div className="flex items-end justify-between gap-6">
+        <div>
+          <h2 className="display text-white">
+            {title}
+            <span className="ml-1 animate-caret text-neon-magenta">_</span>
+          </h2>
+          <Barcode seed={seed} className="mt-5 text-white/80" />
+        </div>
+        {label && <span className="paren-label hidden shrink-0 pb-2 sm:block">({label})</span>}
+      </div>
+
+      {intro && (
+        <p className="mt-7 max-w-xl text-sm leading-relaxed text-white/55">{intro}</p>
       )}
     </div>
   );

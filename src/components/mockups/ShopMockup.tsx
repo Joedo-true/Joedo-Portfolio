@@ -6,19 +6,19 @@ interface Product {
   name: string;
   cat: 'Обувь' | 'Одежда' | 'Аксессуары';
   price: number;
-  emoji: string;
 }
 
 const products: Product[] = [
-  { id: 1, name: 'Runner Pro', cat: 'Обувь', price: 6900, emoji: '👟' },
-  { id: 2, name: 'Куртка Aero', cat: 'Одежда', price: 12400, emoji: '🧥' },
-  { id: 3, name: 'Рюкзак City', cat: 'Аксессуары', price: 4200, emoji: '🎒' },
-  { id: 4, name: 'Кепка Sport', cat: 'Аксессуары', price: 1800, emoji: '🧢' },
-  { id: 5, name: 'Худи Warm', cat: 'Одежда', price: 5400, emoji: '👕' },
-  { id: 6, name: 'Кеды Lite', cat: 'Обувь', price: 3900, emoji: '👞' },
+  { id: 1, name: 'Runner Pro', cat: 'Обувь', price: 6900 },
+  { id: 2, name: 'Куртка Aero', cat: 'Одежда', price: 12400 },
+  { id: 3, name: 'Рюкзак City', cat: 'Аксессуары', price: 4200 },
+  { id: 4, name: 'Кепка Sport', cat: 'Аксессуары', price: 1800 },
+  { id: 5, name: 'Худи Warm', cat: 'Одежда', price: 5400 },
+  { id: 6, name: 'Кеды Lite', cat: 'Обувь', price: 3900 },
 ];
 
 const cats = ['Все', 'Обувь', 'Одежда', 'Аксессуары'] as const;
+const LINE = { borderColor: 'var(--line)' } as const;
 
 export function ShopMockup() {
   const [cat, setCat] = useState<(typeof cats)[number]>('Все');
@@ -29,35 +29,31 @@ export function ShopMockup() {
     () => products.filter((p) => (cat === 'Все' || p.cat === cat) && p.price <= maxPrice),
     [cat, maxPrice],
   );
-
   const total = useMemo(
-    () => cart.reduce((sum, id) => sum + (products.find((p) => p.id === id)?.price ?? 0), 0),
+    () => cart.reduce((s, id) => s + (products.find((p) => p.id === id)?.price ?? 0), 0),
     [cart],
   );
-
-  const fmt = (n: number) => '₽ ' + n.toLocaleString('ru-RU');
+  const fmt = (n: number) => n.toLocaleString('ru-RU');
 
   return (
-    <div className="flex h-full flex-col gap-3 p-4 text-left sm:p-5">
-      {/* Панель фильтров */}
-      <div className="rounded-xl border border-slate-200/80 bg-white/70 p-3 dark:border-ink-700/70 dark:bg-ink-800/60">
+    <div className="flex h-full flex-col gap-2.5 p-3 text-left">
+      <div className="border p-2.5" style={LINE}>
         <div className="mb-2.5 flex flex-wrap gap-1.5">
           {cats.map((c) => (
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                cat === c
-                  ? 'bg-brand-emerald text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-ink-700 dark:text-slate-300'
+              className={`border px-2 py-0.5 font-mono text-[9px] uppercase tracking-mega transition-colors ${
+                cat === c ? 'border-neon-blue bg-neon-blue text-black' : 'text-white/55'
               }`}
+              style={cat === c ? undefined : LINE}
             >
               {c}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-medium text-slate-400">Цена до</span>
+          <span className="font-mono text-[9px] uppercase tracking-mega text-white/35">до</span>
           <input
             type="range"
             min={1800}
@@ -65,16 +61,15 @@ export function ShopMockup() {
             step={100}
             value={maxPrice}
             onChange={(e) => setMaxPrice(Number(e.target.value))}
-            className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-emerald dark:bg-ink-700"
             aria-label="Максимальная цена"
+            className="h-[2px] flex-1 cursor-pointer appearance-none bg-white/20 accent-neon-blue"
           />
-          <span className="w-16 text-right text-[11px] font-bold tabular-nums text-ink-900 dark:text-white">
-            {fmt(maxPrice)}
+          <span className="w-16 text-right font-mono text-[10px] tabular-nums text-white">
+            {fmt(maxPrice)} ₽
           </span>
         </div>
       </div>
 
-      {/* Сетка товаров */}
       <div className="grid grid-cols-3 gap-2">
         <AnimatePresence mode="popLayout">
           {filtered.map((p) => {
@@ -83,43 +78,37 @@ export function ShopMockup() {
               <motion.button
                 key={p.id}
                 layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.25 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => setCart((c) => (inCart ? c.filter((x) => x !== p.id) : [...c, p.id]))}
-                className={`flex flex-col items-center rounded-xl border p-2 text-center transition-colors ${
-                  inCart
-                    ? 'border-brand-emerald bg-brand-emerald/10'
-                    : 'border-slate-200/80 bg-white/70 hover:border-brand-emerald/50 dark:border-ink-700/70 dark:bg-ink-800/60'
-                }`}
+                className="border p-2 text-left transition-colors"
+                style={inCart ? { borderColor: '#3B5BFF', background: '#3B5BFF14' } : LINE}
               >
-                <span className="text-2xl">{p.emoji}</span>
-                <span className="mt-1 line-clamp-1 text-[10px] font-semibold text-ink-900 dark:text-white">
+                <span className="block font-mono text-[9px] uppercase tracking-[0.06em] text-white/80">
                   {p.name}
                 </span>
-                <span className="text-[10px] font-bold text-brand-emerald">{fmt(p.price)}</span>
+                <span className="mt-1 block font-mono text-[10px] text-neon-blue">
+                  {fmt(p.price)} ₽
+                </span>
               </motion.button>
             );
           })}
         </AnimatePresence>
       </div>
 
-      {/* Живая корзина */}
-      <div className="mt-auto flex items-center justify-between rounded-xl border border-slate-200/80 bg-white/70 p-3 dark:border-ink-700/70 dark:bg-ink-800/60">
-        <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-          🛒 Корзина
-          <span className="rounded-full bg-brand-emerald px-1.5 text-[10px] font-bold text-white">
-            {cart.length}
-          </span>
+      <div className="mt-auto flex items-center justify-between border p-2.5" style={LINE}>
+        <span className="font-mono text-[10px] uppercase tracking-mega text-white/55">
+          Корзина [{cart.length}]
         </span>
         <motion.span
           key={total}
-          initial={{ scale: 1.15, color: '#10B981' }}
-          animate={{ scale: 1 }}
-          className="text-sm font-bold tabular-nums text-ink-900 dark:text-white"
+          initial={{ opacity: 0.4 }}
+          animate={{ opacity: 1 }}
+          className="font-mono text-sm tabular-nums text-white"
         >
-          {fmt(total)}
+          {fmt(total)} ₽
         </motion.span>
       </div>
     </div>

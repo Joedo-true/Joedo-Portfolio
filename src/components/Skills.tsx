@@ -1,89 +1,78 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { skillGroups, type Skill } from '../data/skills';
-import { Reveal, RevealGroup, revealChild } from './ui/Reveal';
 import { SectionHeading } from './ui/SectionHeading';
 
-function SkillTile({ skill }: { skill: Skill }) {
+function SkillCell({ skill, index }: { skill: Skill; index: number }) {
   const [hover, setHover] = useState(false);
   const Icon = skill.icon;
-
   return (
-    <motion.div variants={revealChild}>
-      <div
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        className="group relative flex aspect-[4/3] cursor-default flex-col items-center justify-center gap-2.5
-          overflow-hidden rounded-2xl border border-slate-200/80 bg-white/60 p-4 backdrop-blur-md transition-all duration-300
-          dark:border-white/10 dark:bg-white/[0.03]"
-        style={{
-          borderColor: hover ? skill.color : undefined,
-          boxShadow: hover ? `0 16px 40px -18px ${skill.color}` : undefined,
-          transform: hover ? 'translateY(-4px)' : undefined,
-        }}
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="group relative flex items-center gap-4 px-5 py-5 transition-colors duration-200 sm:px-8"
+      style={{ background: hover ? `${skill.color}0f` : undefined }}
+    >
+      <span className="font-mono text-[11px] tracking-mega text-white/30">
+        {String(index + 1).padStart(2, '0')}
+      </span>
+      <Icon
+        className="h-5 w-5 shrink-0 transition-colors duration-200"
+        style={{ color: hover ? skill.color : 'rgba(255,255,255,0.55)' }}
+      />
+      <span
+        className="font-mono text-[13px] uppercase tracking-[0.08em] transition-colors duration-200"
+        style={{ color: hover ? skill.color : '#fff' }}
       >
-        {/* Мягкая заливка фирменным цветом при наведении */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-          style={{ background: `radial-gradient(circle at 50% 30%, ${skill.color}22, transparent 70%)` }}
-        />
-        <div
-          className="relative transition-colors duration-300"
-          style={{ color: hover ? skill.color : undefined }}
-        >
-          <Icon className="h-8 w-8 text-slate-500 transition-colors duration-300 dark:text-slate-300" style={{ color: hover ? skill.color : undefined }} />
-        </div>
-        <span
-          className="relative text-sm font-semibold text-slate-700 transition-colors duration-300 dark:text-slate-200"
-          style={{ color: hover ? skill.color : undefined }}
-        >
-          {skill.name}
-        </span>
-      </div>
-    </motion.div>
+        {skill.name}
+      </span>
+      <span
+        className="absolute inset-y-0 left-0 w-px origin-top scale-y-0 transition-transform duration-300 group-hover:scale-y-100"
+        style={{ background: skill.color }}
+      />
+    </div>
   );
 }
 
 export function Skills() {
   return (
-    <section id="stack" className="relative overflow-hidden py-24 sm:py-32">
-      {/* Тонкий фон */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-brand-violet/[0.03] to-transparent" />
-
-      <div className="container-x relative">
+    <section id="stack" className="relative rule-t py-20 sm:py-28">
+      <div className="container-x">
         <SectionHeading
-          eyebrow="Экспонат 03 — Стек"
-          title={
-            <>
-              Инструменты, проверенные <span className="text-gradient">в бою</span>
-            </>
-          }
-          subtitle="Только современный и надёжный стек, сгруппированный по назначению — так видно системность подхода. Наведите на плитку."
+          title="Стек"
+          label="My skills"
+          seed={23}
+          intro="Только современный и надёжный инструментарий, сгруппированный по назначению — так видно системность подхода."
         />
+      </div>
 
-        <div className="mt-16 space-y-12">
-          {skillGroups.map((group) => (
-            <div key={group.title}>
-              <Reveal>
-                <div className="mb-6 flex items-center gap-4">
-                  <div className="flex items-baseline gap-2.5">
-                    <h3 className="text-lg font-bold text-ink-900 dark:text-white">{group.title}</h3>
-                    <span className="font-mono text-xs uppercase tracking-widest text-brand-violet/80">
-                      {group.caption}
-                    </span>
-                  </div>
-                  <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-ink-700" />
-                </div>
-              </Reveal>
-
-              <RevealGroup className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {group.items.map((skill) => (
-                  <SkillTile key={skill.name} skill={skill} />
-                ))}
-              </RevealGroup>
+      <div className="mt-14">
+        {skillGroups.map((group) => (
+          <div key={group.title} className="rule-t">
+            {/* Шапка группы */}
+            <div className="container-x flex items-baseline justify-between gap-6 py-5">
+              <h3 className="font-mono text-[13px] uppercase tracking-mega text-white">
+                {group.title}
+              </h3>
+              <span className="paren-label">({group.caption})</span>
             </div>
-          ))}
-        </div>
+
+            <div className="rule-t grid sm:grid-cols-2 lg:grid-cols-4">
+              {group.items.map((skill, i) => (
+                <div key={skill.name} className={i % 4 === 0 ? '' : 'lg:rule-l'}>
+                  <SkillCell skill={skill} index={i} />
+                </div>
+              ))}
+              {/* Добор пустых ячеек штриховкой, чтобы ряд сетки был замкнут */}
+              {Array.from({ length: (4 - (group.items.length % 4)) % 4 }).map((_, i) => (
+                <div
+                  key={`pad-${i}`}
+                  className="hatch hidden opacity-50 lg:block lg:rule-l"
+                  aria-hidden
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

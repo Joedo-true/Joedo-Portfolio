@@ -69,11 +69,11 @@ export default function StructureModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.35 }}
-        className="fixed inset-0 z-[200] flex flex-col bg-ink-950/70 backdrop-blur-xl"
+        className="fixed inset-0 z-[200] flex flex-col bg-base-950/80 backdrop-blur-xl"
         onClick={onClose}
       >
-        {/* Цветные пятна-подсветка */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-violet/15 blur-3xl" />
+        {/* Сетка на фоне — та же, что в hero */}
+        <div className="warp-grid pointer-events-none absolute inset-0 opacity-60" />
 
         {/* Верхняя панель */}
         <motion.div
@@ -84,7 +84,7 @@ export default function StructureModal({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="min-w-0">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand-violet">
+            <p className="font-mono text-[11px] uppercase tracking-mega text-neon-magenta">
               Структура проекта
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1 text-sm text-slate-300">
@@ -107,7 +107,7 @@ export default function StructureModal({
           <button
             onClick={onClose}
             aria-label="Закрыть"
-            className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full border border-white/15 text-slate-300 transition-colors hover:border-brand-violet/60 hover:text-white"
+            className="grid h-10 w-10 flex-shrink-0 place-items-center border border-white/20 text-white/70 transition-colors hover:border-neon-magenta hover:text-white"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />

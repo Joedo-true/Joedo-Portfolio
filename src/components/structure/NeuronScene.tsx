@@ -4,14 +4,14 @@ import { CubicBezierLine, Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { FileNode } from '../../data/fileTree';
 
-// Палитра — в тон сайту
+// Палитра — в тон сайту (плоский неон на near-black)
 const C = {
-  soma: '#8B5CF6',
-  somaEmissive: '#3B1D8F',
-  folder: '#22D3EE',
+  soma: '#3B5BFF',
+  somaEmissive: '#101A4D',
+  folder: '#C6FF3D',
   file: '#A78BFA',
-  line: '#6366F1',
-  back: '#D946EF',
+  line: '#3B5BFF',
+  back: '#FF3DAF',
 };
 
 const easeOutBack = (t: number) => {
