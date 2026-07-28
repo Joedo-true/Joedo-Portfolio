@@ -9,6 +9,9 @@ import { useEffect, useRef } from 'react';
  *
  * При `interactive` добавляется указатель: узлы внутри небольшого круга под
  * курсором расступаются — линии цепляются за мышь, но след за ней не тянется.
+ * Смещение от курсора у каждого узла своё и живёт с задержкой: под нажим узел
+ * уходит быстро, а возвращается в несколько раз дольше. Из-за этой асимметрии
+ * сетка ведёт себя вязко, а не как натянутая резина.
  *
  * Рисуется на canvas: 45+ ломаных пересчитываются каждый кадр, в SVG это
  * означало бы столько же обновлений DOM. Кадры не идут, пока блок за
@@ -77,6 +80,17 @@ export function WaveGrid({
     const PUSH_R = 120; // радиус круга воздействия
     const PUSH = 11; // сила расталкивания, px
 
+    // Смещение от курсора — состояние каждого узла, а не функция позиции мыши:
+    // иначе линии встают на место ровно так же резко, как уходит курсор.
+    // Доли даны на кадр при 60 Гц, пересчёт под реальный кадр — в `ease`.
+    const nodes = (cols + 1) * (rows + 1);
+    const pushX = new Float32Array(nodes);
+    const pushY = new Float32Array(nodes);
+    const ATTACK = 0.16; // уступить нажиму — примерно 0.1 с
+    const RELEASE = 0.018; // вернуться на место — примерно 1 с, в 9 раз дольше
+    /** Доля «за кадр при 60 Гц» → доля за фактический кадр длиной dt */
+    const ease = (k: number, dt: number) => 1 - (1 - k) ** (dt * 60);
+
     const onMove = (e: PointerEvent) => {
       const r = wrap.getBoundingClientRect();
       const x = e.clientX - r.left;
@@ -133,38 +147,28 @@ export function WaveGrid({
       dx += 0.35 * Math.sin(py * 0.02 + t * 0.6);
       dy += 0.35 * Math.cos(px * 0.018 - t * 0.5);
 
-      dx *= amp;
-      dy *= amp;
-
-      if (!live) return [dx, dy];
-
-      // Расталкивание вокруг курсора: узлы расступаются, при зажатой
-      // кнопке — сильнее, будто линию оттягивают
-      if (ptr.inside) {
-        const vx = px - ptr.x;
-        const vy = py - ptr.y;
-        const d = Math.hypot(vx, vy) || 1;
-        if (d < PUSH_R) {
-          const f = (1 - d / PUSH_R) ** 2 * PUSH * (ptr.held ? 1.5 : 1);
-          dx += (vx / d) * f;
-          dy += (vy / d) * f;
-        }
-      }
-
-      return [dx, dy];
+      return [dx * amp, dy * amp];
     };
 
     let raf = 0;
     let start = performance.now();
+    let last = start;
     let running = true;
 
     const draw = (now: number) => {
       const t = still ? STATIC_T : ((now - start) / 1000) * speed;
+      // Ограничение сверху: после возврата на вкладку кадр «длиной» в минуту
+      // не должен разом дёрнуть всю сетку
+      const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
+      last = now;
 
       // Курсор догоняет цель — сглаживает рывки мыши
+      const kAttack = ease(ATTACK, dt);
+      const kRelease = ease(RELEASE, dt);
       if (live) {
-        ptr.x += (ptr.tx - ptr.x) * 0.16;
-        ptr.y += (ptr.ty - ptr.y) * 0.16;
+        const kPtr = ease(0.16, dt);
+        ptr.x += (ptr.tx - ptr.x) * kPtr;
+        ptr.y += (ptr.ty - ptr.y) * kPtr;
       }
 
       ctx.clearRect(0, 0, w, h);
@@ -182,8 +186,33 @@ export function WaveGrid({
           const y0 = r * stepY;
           const [dx, dy] = offset(x0, y0, still ? STATIC_T : t);
           const i = r * (cols + 1) + c;
-          px[i] = x0 + dx;
-          py[i] = y0 + dy;
+
+          if (live) {
+            // Куда курсор толкает узел прямо сейчас (0, если курсор далеко)
+            let gx = 0;
+            let gy = 0;
+            if (ptr.inside) {
+              const vx = x0 - ptr.x;
+              const vy = y0 - ptr.y;
+              const d = Math.hypot(vx, vy) || 1;
+              if (d < PUSH_R) {
+                const f = (1 - d / PUSH_R) ** 2 * PUSH * (ptr.held ? 1.5 : 1);
+                gx = (vx / d) * f;
+                gy = (vy / d) * f;
+              }
+            }
+            // Сравниваем квадраты длин — без корня: узел уступает быстро,
+            // а расходится обратно медленно
+            const k =
+              gx * gx + gy * gy > pushX[i] * pushX[i] + pushY[i] * pushY[i] ? kAttack : kRelease;
+            pushX[i] += (gx - pushX[i]) * k;
+            pushY[i] += (gy - pushY[i]) * k;
+            px[i] = x0 + dx + pushX[i];
+            py[i] = y0 + dy + pushY[i];
+          } else {
+            px[i] = x0 + dx;
+            py[i] = y0 + dy;
+          }
         }
       }
 
@@ -223,6 +252,11 @@ export function WaveGrid({
             if (e.isIntersecting && !running) {
               running = true;
               start = performance.now() - 1;
+              last = start;
+              // Пока блок был за экраном, кадры не шли: возвращаемся к
+              // нетронутой сетке, а не к застывшей вмятине от курсора
+              pushX.fill(0);
+              pushY.fill(0);
               raf = requestAnimationFrame(draw);
             } else if (!e.isIntersecting) {
               running = false;
