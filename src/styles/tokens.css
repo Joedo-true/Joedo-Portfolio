@@ -1,0 +1,60 @@
+/**
+ * Дизайн-токены (раздел 3 ТЗ).
+ *
+ * Правило проекта: весь цвет идёт от 3D-объектов. Интерфейс живёт на четырёх
+ * нейтралях — тёмный фон, светлый фон и текст поверх каждого. Никаких
+ * дополнительных акцентов на кнопках и ссылках сверх этого списка.
+ */
+
+:root {
+  /* ——— Нейтрали ——— */
+  --bg-dark: #0a0a0b;
+  --text-on-dark: #f5f5f2;
+  --bg-light: #ffffff;
+  /* тот же тон, что и --bg-dark: тёмная и светлая темы рифмуются */
+  --text-on-light: #0a0a0b;
+
+  /* ——— Палитра шейдера: главный тессеракт ——— */
+  --shader-iridescent-a: #2bb89a; /* бирюза */
+  --shader-iridescent-b: #e14bd1; /* пурпур */
+  --shader-iridescent-c: #7b5cfa; /* фиолетовый */
+  --shader-iridescent-d: #f2a93b; /* золото */
+
+  /* ——— Палитра шейдера: спираль раздела 2 ——— */
+  --shader-spiral-a: #3fd0e0; /* циан */
+  --shader-spiral-b: #2bb89a; /* бирюза */
+  --shader-spiral-c: #3b82f6; /* синий */
+  --shader-spiral-d: #0e7c86; /* глубокий циан */
+
+  /* ——— Монохромные версии того же шейдера ——— */
+  --icon-mono-light-a: #d8d8d6;
+  --icon-mono-light-b: #ffffff;
+  --icon-mono-dark-a: #000000;
+  --icon-mono-dark-b: #2a2a2a;
+
+  /* ——— Типографика: только Inter 400 и 500 ——— */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display-size: clamp(40px, 7vw, 128px);
+  --font-display-leading: 0.97;
+  --font-nav-size: 15px;
+  --font-nav-tracking: 0.02em;
+  --font-body-size: 17px;
+  --font-body-leading: 1.55;
+  --font-counter-size: 15px;
+
+  /* ——— Тема (переключается стором, см. useSiteStore) ——— */
+  --bg: var(--bg-dark);
+  --text: var(--text-on-dark);
+}
+
+/* Переворот темы на 50% раскрытия раздела 2. Кросс-фейд, а не скачок. */
+:root[data-theme='light'] {
+  --bg: var(--bg-light);
+  --text: var(--text-on-light);
+}
+
+:root[data-theme-transition='on'] {
+  transition:
+    background-color 0.5s cubic-bezier(0.65, 0, 0.35, 1),
+    color 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
