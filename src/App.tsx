@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Header } from './components/Header';
-import { Hero } from './components/Hero';
+import { HeroSection } from './components/HeroSection/HeroSection';
 import { Services } from './components/Services';
 import { Projects } from './components/Projects';
 import { Skills } from './components/Skills';
@@ -30,12 +31,42 @@ function MarqueeBand() {
   );
 }
 
+/**
+ * Старая навигация нужна секциям ниже, но на первом экране у него своя шапка
+ * из ТЗ (название + кнопка-тессеракт) — две сразу спорили бы друг с другом.
+ * Поэтому пилюлю показываем только после того, как первый экран прокручен.
+ */
+function DeferredNav() {
+  const [pastHero, setPastHero] = useState(false);
+
+  useEffect(() => {
+    const hero = document.getElementById('top');
+    if (!hero) return;
+    const observer = new IntersectionObserver(([entry]) => setPastHero(!entry.isIntersecting), {
+      threshold: 0,
+    });
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      className={`transition-opacity duration-300 ${
+        pastHero ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+      aria-hidden={!pastHero}
+    >
+      <Header />
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <div className="relative min-h-screen">
-      <Header />
+      <DeferredNav />
       <main>
-        <Hero />
+        <HeroSection />
         <MarqueeBand />
         <Services />
         <Projects />

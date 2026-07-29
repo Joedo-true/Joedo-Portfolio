@@ -47,6 +47,51 @@
   --text: var(--text-on-dark);
 }
 
+/* ——— Первый экран (Фазы 1–2) ——— */
+
+.hero-display {
+  font-family: var(--font-sans);
+  font-size: var(--font-display-size);
+  line-height: var(--font-display-leading);
+  font-weight: 500;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.hero-subline {
+  font-family: var(--font-sans);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-leading);
+  font-weight: 400;
+  margin: 1.75rem auto 0;
+  max-width: 34rem;
+  opacity: 0.72;
+}
+
+.hero-nav-label {
+  font-family: var(--font-sans);
+  font-size: var(--font-nav-size);
+  letter-spacing: var(--font-nav-tracking);
+  font-weight: 500;
+}
+
+.hero-menu-button {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: opacity 0.5s ease-out;
+}
+
+/* Фокус с клавиатуры обязан быть виден — ТЗ 10 */
+.hero-menu-button:focus-visible {
+  outline: 1px solid var(--text-on-dark);
+  outline-offset: 6px;
+}
+
 /* Переворот темы на 50% раскрытия раздела 2. Кросс-фейд, а не скачок. */
 :root[data-theme='light'] {
   --bg: var(--bg-light);
