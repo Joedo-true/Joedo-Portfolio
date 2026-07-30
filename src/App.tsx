@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Header } from './components/Header';
+import { SiteHeader } from './components/Header/SiteHeader';
 import { HeroSection } from './components/HeroSection/HeroSection';
+import { Section2 } from './components/Section2/Section2';
+import { useSiteStore } from './store/useSiteStore';
 import { Services } from './components/Services';
 import { Projects } from './components/Projects';
 import { Skills } from './components/Skills';
@@ -32,41 +35,65 @@ function MarqueeBand() {
 }
 
 /**
- * Старая навигация нужна секциям ниже, но на первом экране у него своя шапка
- * из ТЗ (название + кнопка-тессеракт) — две сразу спорили бы друг с другом.
- * Поэтому пилюлю показываем только после того, как первый экран прокручен.
+ * Старая навигация нужна секциям ниже, но на новых экранах спорит с шапкой из
+ * ТЗ — они обе висят в тех же углах. Поэтому пилюлю показываем только после
+ * раздела 2, то есть уже в старой части страницы.
  */
-function DeferredNav() {
-  const [pastHero, setPastHero] = useState(false);
+function usePastNewScreens() {
+  const [past, setPast] = useState(false);
 
   useEffect(() => {
-    const hero = document.getElementById('top');
-    if (!hero) return;
-    const observer = new IntersectionObserver(([entry]) => setPastHero(!entry.isIntersecting), {
+    const anchor = document.getElementById('section2');
+    if (!anchor) return;
+    const observer = new IntersectionObserver(([entry]) => setPast(!entry.isIntersecting), {
       threshold: 0,
     });
-    observer.observe(hero);
+    observer.observe(anchor);
     return () => observer.disconnect();
   }, []);
 
+  return past;
+}
+
+function DeferredNav({ visible }: { visible: boolean }) {
   return (
     <div
       className={`transition-opacity duration-300 ${
-        pastHero ? 'opacity-100' : 'pointer-events-none opacity-0'
+        visible ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
-      aria-hidden={!pastHero}
+      aria-hidden={!visible}
     >
       <Header />
     </div>
   );
 }
 
+/** Тема живёт на корне документа: её читают все новые компоненты (ТЗ 4.2) */
+function useThemeAttribute() {
+  const theme = useSiteStore((state) => state.theme);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+}
+
 export default function App() {
+  useThemeAttribute();
+  // Одна развилка на две шапки: пока идут новые экраны — работает шапка из ТЗ,
+  // в старой части страницы её сменяет прежняя навигация
+  const pastNewScreens = usePastNewScreens();
+
   return (
     <div className="relative min-h-screen">
-      <DeferredNav />
+      <SiteHeader hidden={pastNewScreens} />
+      <DeferredNav visible={pastNewScreens} />
       <main>
-        <HeroSection />
+        {/* Первый экран прилипший — раздел 2 наезжает и закрывает его (ТЗ 8.1) */}
+        <div className="relative h-[100svh]">
+          <div className="sticky top-0">
+            <HeroSection />
+          </div>
+        </div>
+        <Section2 />
         <MarqueeBand />
         <Services />
         <Projects />

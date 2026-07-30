@@ -80,14 +80,16 @@ export function Tesseract({
   const edges = useRef<THREE.InstancedMesh>(null);
   const vertices = useRef<THREE.InstancedMesh>(null);
 
-  // Один материал на оба меша: это буквально одни и те же трубы
-  const material = useMemo(() => new IridescentMaterial() as THREE.ShaderMaterial, []);
-
-  useEffect(() => {
+  // Один материал на оба меша: это буквально одни и те же трубы.
+  // Пресет ставим сразу при создании — в эффекте он применился бы уже после
+  // первого кадра, и тот успел бы отрисоваться палитрой по умолчанию.
+  const material = useMemo(() => {
+    const instance = new IridescentMaterial() as THREE.ShaderMaterial;
     for (const [name, value] of Object.entries(preset)) {
-      if (material.uniforms[name]) material.uniforms[name].value = value;
+      if (instance.uniforms[name]) instance.uniforms[name].value = value;
     }
-  }, [preset, material]);
+    return instance;
+  }, [preset]);
 
   useEffect(() => () => material.dispose(), [material]);
 

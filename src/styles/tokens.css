@@ -40,7 +40,9 @@
   --font-nav-tracking: 0.02em;
   --font-body-size: 17px;
   --font-body-leading: 1.55;
-  --font-counter-size: 15px;
+  /* Крупнее ориентира ТЗ (14–16px): на пустом загрузочном экране счётчик —
+     единственный элемент, и в 15px он терялся */
+  --font-counter-size: clamp(1.75rem, 3.2vw, 2.75rem);
 
   /* ——— Тема (переключается стором, см. useSiteStore) ——— */
   --bg: var(--bg-dark);
@@ -92,14 +94,51 @@
   outline-offset: 6px;
 }
 
-/* Переворот темы на 50% раскрытия раздела 2. Кросс-фейд, а не скачок. */
+/* ——— Раздел 2 ——— */
+
+.section2 {
+  position: relative;
+  z-index: 10;
+  min-height: 170vh;
+  /* Кросс-фейд темы, а не скачок (ТЗ 8.2) */
+  transition:
+    background-color 0.5s cubic-bezier(0.65, 0, 0.35, 1),
+    color 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.section2-spiral {
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.section2-copy {
+  /* Текстовый блок начинается с середины страницы по вертикали (ТЗ 8.4) */
+  padding: 50vh 1.25rem 8rem;
+}
+
+@media (min-width: 1024px) {
+  .section2-copy {
+    padding-right: 4rem;
+  }
+}
+
+.section2-body {
+  font-family: var(--font-sans);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-leading);
+  font-weight: 400;
+  max-width: 32rem;
+  margin: 0;
+}
+
+/* Переворот темы на 50% раскрытия раздела 2. */
 :root[data-theme='light'] {
   --bg: var(--bg-light);
   --text: var(--text-on-light);
 }
 
-:root[data-theme-transition='on'] {
-  transition:
-    background-color 0.5s cubic-bezier(0.65, 0, 0.35, 1),
-    color 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+/* Шапка перекрашивается тем же кросс-фейдом, что и фон раздела */
+header {
+  transition: color 0.5s cubic-bezier(0.65, 0, 0.35, 1);
 }
