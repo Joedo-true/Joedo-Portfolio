@@ -125,7 +125,19 @@ export function PixelReveal({
       sctx.textAlign = align;
       const x = align === 'center' ? w / 2 : align === 'right' ? w : 0;
 
-      for (const [i, line] of wrapLines(sctx, text, w).entries()) {
+      // text-transform браузер применяет при вёрстке, а fillText о нём не знает:
+      // без этого мозаика рисует исходный регистр, и в конце кроссфейда текст
+      // скачком меняет и регистр, и ширину строк
+      const shown =
+        cs.textTransform === 'uppercase'
+          ? text.toUpperCase()
+          : cs.textTransform === 'lowercase'
+            ? text.toLowerCase()
+            : cs.textTransform === 'capitalize'
+              ? text.replace(/(^|\s)(\S)/g, (_, space, letter) => space + letter.toUpperCase())
+              : text;
+
+      for (const [i, line] of wrapLines(sctx, shown, w).entries()) {
         sctx.fillText(line, x, lineHeight * (i + 0.5));
       }
 

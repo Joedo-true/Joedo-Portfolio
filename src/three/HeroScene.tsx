@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
-import { Tesseract, buildTesseract } from './objects/Tesseract';
+import { buildTesseract } from './objects/tesseractShape';
+import { ParticleTesseract } from './objects/ParticleTesseract';
 import { iridescentPresets } from './shaders/iridescentMaterial';
 import { useSiteStore } from '../store/useSiteStore';
 
@@ -19,12 +20,8 @@ import { useSiteStore } from '../store/useSiteStore';
  * целиком, на 70% она занимает почти всю высоту и читается вся.
  */
 const LOADING_SIZE = 0.55;
-const HERO_SIZE = 0.34;
+const HERO_SIZE = 0.4;
 const SHRINK_AT = 85;
-
-/** Полный оборот, с (ТЗ 6, шаг 5) */
-const SPIN_Z = 14;
-const SPIN_Y = 30;
 
 function TesseractRig() {
   const group = useRef<THREE.Group>(null);
@@ -33,11 +30,13 @@ function TesseractRig() {
   const shrunk = useRef(false);
   const progress = useSiteStore((state) => state.loadingProgress);
 
+  const isLoaded = useSiteStore((state) => state.isLoaded);
   const shape = useMemo(() => buildTesseract(), []);
-  const reduced = useMemo(
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    [],
-  );
+
+  // Каждая частица — икосаэдр в 80 граней, и на 2200 штук это 176 тысяч
+  // треугольников за кадр. На узком экране фигура и так мельче, поэтому
+  // частиц берём меньше — плотность строки от этого не страдает.
+  const particleCount = useMemo(() => (window.innerWidth < 768 ? 1300 : 2200), []);
 
   useEffect(() => {
     if (progress < SHRINK_AT || shrunk.current) return;
@@ -45,25 +44,23 @@ function TesseractRig() {
     gsap.to(size.current, { k: HERO_SIZE, duration: 1.1, ease: 'power3.inOut' });
   }, [progress]);
 
-  useFrame((state) => {
+  useFrame(() => {
     const node = group.current;
     if (!node) return;
-
     // Размер задан долей высоты экрана, поэтому считаем от вьюпорта в мировых
     // единицах — фигура одинаково смотрится на любом соотношении сторон
     node.scale.setScalar((size.current.k * viewport.height) / (shape.extent * 2));
-
-    if (reduced) return;
-    // Обе оси крутятся одновременно и линейно: время не берём по модулю,
-    // поэтому склейки на 360° просто не существует
-    const time = state.clock.elapsedTime;
-    node.rotation.z = -time * ((Math.PI * 2) / SPIN_Z);
-    node.rotation.y = time * ((Math.PI * 2) / SPIN_Y);
   });
 
   return (
     <group ref={group}>
-      <Tesseract preset={iridescentPresets.tesseract} shape={shape} />
+      {/* Вращение живёт внутри: оно набирается по мере сборки частиц */}
+      <ParticleTesseract
+        shape={shape}
+        preset={iridescentPresets.tesseract}
+        formed={isLoaded}
+        count={particleCount}
+      />
     </group>
   );
 }

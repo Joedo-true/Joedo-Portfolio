@@ -95,7 +95,7 @@ html.is-loading body {
   line-height: var(--font-display-leading);
   font-weight: 500;
   margin: 0;
-  text-transform: uppercase;
+  text-align: center;
   letter-spacing: -0.01em;
 }
 
