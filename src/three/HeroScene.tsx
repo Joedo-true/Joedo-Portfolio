@@ -30,13 +30,12 @@ function TesseractRig() {
   const shrunk = useRef(false);
   const progress = useSiteStore((state) => state.loadingProgress);
 
-  const isLoaded = useSiteStore((state) => state.isLoaded);
   const shape = useMemo(() => buildTesseract(), []);
 
-  // Каждая частица — икосаэдр в 80 граней, и на 2200 штук это 176 тысяч
+  // Каждая частица — икосаэдр в 20 граней, и на 6500 штук это 130 тысяч
   // треугольников за кадр. На узком экране фигура и так мельче, поэтому
   // частиц берём меньше — плотность строки от этого не страдает.
-  const particleCount = useMemo(() => (window.innerWidth < 768 ? 1300 : 2200), []);
+  const particleCount = useMemo(() => (window.innerWidth < 768 ? 3600 : 6500), []);
 
   useEffect(() => {
     if (progress < SHRINK_AT || shrunk.current) return;
@@ -55,10 +54,13 @@ function TesseractRig() {
   return (
     <group ref={group}>
       {/* Вращение живёт внутри: оно набирается по мере сборки частиц */}
+      {/* Сборка привязана к самому прогрессу, а не к isLoaded: тот выставляется
+          только после ухода счётчика, и фигура собиралась бы на полсекунды
+          позже, чем закончилась загрузка */}
       <ParticleTesseract
         shape={shape}
         preset={iridescentPresets.tesseract}
-        formed={isLoaded}
+        formed={progress >= 100}
         count={particleCount}
       />
     </group>

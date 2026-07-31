@@ -20,7 +20,7 @@ import type { IridescentPreset } from '../shaders/iridescentMaterial';
 
 const vertexShader = /* glsl */ `
   attribute vec3 aTarget;
-  // x — радиус в вихре, y — высота, z — начальная фаза
+  // Место частицы в облаке-сфере: обычная точка, а не полярные координаты
   attribute vec3 aVortex;
   attribute float aSeed;
   attribute float aDelay;
@@ -34,12 +34,26 @@ const vertexShader = /* glsl */ `
   varying float vSeed;
 
   void main() {
-    // Угловая скорость выше у оси — из-за этого разница по слоям и читается
-    // как воронка, а не как равномерно крутящееся кольцо
-    float speed = 0.35 + 1.15 / (aVortex.x + 0.5);
-    float angle = aVortex.z + uTime * speed;
-    float bob = sin(uTime * 0.7 + aVortex.z * 2.0) * 0.1;
-    vec3 vortexPos = vec3(cos(angle) * aVortex.x, aVortex.y + bob, sin(angle) * aVortex.x);
+    // Облако крутится вокруг Y, но слои идут с разной скоростью: у оси быстрее,
+    // по краю медленнее — иначе сфера вращалась бы как твёрдый шар
+    float axisDist = length(aVortex.xz);
+    float angle = uTime * (0.3 + 0.75 / (axisDist + 0.7));
+    float c = cos(angle);
+    float s = sin(angle);
+    vec3 vortexPos = vec3(
+      aVortex.x * c - aVortex.z * s,
+      aVortex.y,
+      aVortex.x * s + aVortex.z * c
+    );
+
+    // Турбулентность: три несоизмеримые частоты, у каждой частицы свои фазы.
+    // Она добавляется до сборки, поэтому в собранной фигуре её уже нет.
+    vec3 turbulence = vec3(
+      sin(uTime * 0.90 + aSeed * 53.0 + aVortex.y * 3.1),
+      sin(uTime * 0.73 + aSeed * 37.0 + aVortex.x * 2.7),
+      sin(uTime * 1.13 + aSeed * 29.0 + aVortex.z * 3.7)
+    );
+    vortexPos += turbulence * 0.19;
 
     // Сборка с разбегом: частицы прилетают не одновременно, поэтому фигура
     // проступает, а не возникает целиком
@@ -113,12 +127,15 @@ const fragmentShader = /* glsl */ `
 const SPIN_Z = 14;
 const SPIN_Y = 30;
 
+/** Радиус облака до сборки, в мировых единицах (половина тессеракта — 1) */
+const CLOUD_RADIUS = 1.3;
+
 export function ParticleTesseract({
   shape,
   preset,
   formed,
-  count = 2200,
-  particleRadius = 0.022,
+  count = 6500,
+  particleRadius = 0.0075,
 }: {
   shape: TesseractShape;
   preset: IridescentPreset;
@@ -149,20 +166,25 @@ export function ParticleTesseract({
       targets[i * 3 + 1] = points[i].y;
       targets[i * 3 + 2] = points[i].z;
 
-      // Воронка: внизу уже, наверху шире. sqrt по радиусу — иначе частицы
-      // скучиваются у оси, потому что площадь кольца растёт с радиусом.
-      const height = (Math.random() * 2 - 1) * 1.35;
-      const cone = 0.3 + 0.7 * ((height + 1.35) / 2.7);
-      vortex[i * 3] = 1.45 * cone * Math.sqrt(Math.random());
-      vortex[i * 3 + 1] = height;
-      vortex[i * 3 + 2] = Math.random() * Math.PI * 2;
+      // Облако-сфера. Направление берём равномерно по сфере: если просто
+      // раскидать углы, частицы скучиваются у полюсов. Радиус смещён к
+      // оболочке — сплошной шар выглядел бы комком, а не облаком.
+      const cosTheta = Math.random() * 2 - 1;
+      const phi = Math.random() * Math.PI * 2;
+      const ring = Math.sqrt(1 - cosTheta * cosTheta);
+      const radius = CLOUD_RADIUS * (0.4 + 0.6 * Math.cbrt(Math.random()));
+      vortex[i * 3] = ring * Math.cos(phi) * radius;
+      vortex[i * 3 + 1] = cosTheta * radius;
+      vortex[i * 3 + 2] = ring * Math.sin(phi) * radius;
 
       seeds[i] = Math.random();
       delays[i] = Math.random() * 0.45;
     }
 
-    // Радиус 1: реальный размер задаётся uScale в шейдере
-    const buffer = new THREE.IcosahedronGeometry(1, 1);
+    // Радиус 1: реальный размер задаётся uScale в шейдере.
+    // Детализация 0 — 20 граней: на трёх пикселях экрана она неотличима от
+    // гладкой сферы, а частиц теперь тысячи, и каждая грань на счету.
+    const buffer = new THREE.IcosahedronGeometry(1, 0);
     buffer.setAttribute('aTarget', new THREE.InstancedBufferAttribute(targets, 3));
     buffer.setAttribute('aVortex', new THREE.InstancedBufferAttribute(vortex, 3));
     buffer.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1));
