@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { Tesseract, buildTesseract } from './objects/Tesseract';
-import { NoiseField } from './objects/NoiseField';
 import { iridescentPresets } from './shaders/iridescentMaterial';
 import { useSiteStore } from '../store/useSiteStore';
 
@@ -65,8 +64,6 @@ function TesseractRig() {
   return (
     <group ref={group}>
       <Tesseract preset={iridescentPresets.tesseract} shape={shape} />
-      {/* Облако рябит внутри фигуры и вращается вместе с ней */}
-      <NoiseField extent={0.88} />
     </group>
   );
 }

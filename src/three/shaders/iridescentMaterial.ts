@@ -16,10 +16,12 @@ import { extend, type MaterialNode } from '@react-three/fiber';
 const vertexShader = /* glsl */ `
   varying vec3 vNormal;
   varying vec3 vViewDir;
+  varying vec3 vSurface;
 
   void main() {
     mat4 modelView = modelViewMatrix;
     vec3 objectNormal = normal;
+    vec3 surface = position;
 
     #ifdef USE_INSTANCING
       // Рёбра тессеракта — один InstancedMesh с разной длиной труб, то есть с
@@ -27,11 +29,17 @@ const vertexShader = /* glsl */ `
       // нормалям «поехать» на растянутых рёбрах.
       modelView = modelViewMatrix * instanceMatrix;
       objectNormal = transpose(inverse(mat3(instanceMatrix))) * objectNormal;
+      // Координата с учётом инстанса: иначе крапины повторялись бы на каждом
+      // ребре одинаково, ведь геометрия у всех 32 труб общая
+      surface = (instanceMatrix * vec4(position, 1.0)).xyz;
     #endif
 
     vec4 mvPosition = modelView * vec4(position, 1.0);
     vNormal = normalize(transpose(inverse(mat3(modelView))) * objectNormal);
     vViewDir = -mvPosition.xyz;
+    // Координаты объекта, а не экрана: зерно принадлежит поверхности и едет
+    // вместе с ней при вращении, а не мерцает поверх кадра
+    vSurface = surface;
 
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -45,6 +53,8 @@ const fragmentShader = /* glsl */ `
   uniform vec3  uColorD;
   uniform vec3  uHighlight;
   uniform float uGrainAmount;
+  uniform float uGrainScale;
+  uniform float uGrainDensity;
   uniform float uSaturation;
   uniform float uBandScale;
   uniform float uDrift;
@@ -52,6 +62,12 @@ const fragmentShader = /* glsl */ `
 
   varying vec3 vNormal;
   varying vec3 vViewDir;
+  varying vec3 vSurface;
+
+  /** Хеш ячейки: одинаковый для всех пикселей внутри одной крапины */
+  float cellHash(vec3 cell) {
+    return fract(sin(dot(cell, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+  }
 
   // Развёртка палитры замкнута в кольцо (D → A), иначе на полосах виден стык.
   // «Почти белый» из брифа даёт не эта развёртка, а подмешивание uHighlight
@@ -93,14 +109,24 @@ const fragmentShader = /* glsl */ `
     float luma = dot(color, vec3(0.299, 0.587, 0.114));
     color = mix(vec3(luma), color, uSaturation);
 
-    float grain =
-      (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + uTime) * 43758.5453) - 0.5)
-      * uGrainAmount;
-    color += grain;
-
     // Стекло: тело почти прозрачно, кромки плотные. uBaseAlpha = 1 возвращает
     // обычный непрозрачный материал.
     float alpha = mix(uBaseAlpha, 1.0, fresnel);
+
+    // ——— Крапчатое зерно в самом материале ———
+    // Поверхность нарезается на кубические ячейки в координатах объекта;
+    // часть ячеек становится тёмными крапинами. Они темнее фона и плотнее
+    // окружающего стекла, поэтому читаются как частицы внутри материала,
+    // а не как плёнка поверх кадра.
+    vec3 cell = floor(vSurface * uGrainScale);
+    float noise = cellHash(cell);
+    float edge = 1.0 - uGrainDensity;
+    float speck = smoothstep(edge, edge + 0.04, noise);
+    // На бликах крапины гасим — там поверхность должна оставаться чистой
+    speck *= 1.0 - fresnel * 0.55;
+
+    color = mix(color, color * 0.16, speck * uGrainAmount);
+    alpha = mix(alpha, min(1.0, alpha + 0.2), speck * uGrainAmount);
 
     gl_FragColor = vec4(color, alpha);
     #include <colorspace_fragment>
@@ -115,7 +141,9 @@ export const IridescentMaterial = shaderMaterial(
     uColorC: new THREE.Color('#7b5cfa'),
     uColorD: new THREE.Color('#f2a93b'),
     uHighlight: new THREE.Color('#fafaf7'),
-    uGrainAmount: 0.055,
+    uGrainAmount: 0.9,
+    uGrainScale: 150,
+    uGrainDensity: 0.3,
     uSaturation: 1,
     uBandScale: 1.6,
     uDrift: 0.05,
@@ -134,7 +162,12 @@ export interface IridescentPreset {
   uColorD: THREE.Color;
   uHighlight: THREE.Color;
   uSaturation: number;
+  /** Сила крапин, 0 — гладкая поверхность */
   uGrainAmount: number;
+  /** Частота крапин: ячеек на мировую единицу */
+  uGrainScale: number;
+  /** Доля ячеек, ставших крапинами */
+  uGrainDensity: number;
   uBandScale: number;
   uDrift: number;
   /** Плотность тела: 1 — обычный материал, меньше — полупрозрачное стекло */
@@ -146,7 +179,13 @@ const preset = (
   highlight: string,
   rest: Pick<
     IridescentPreset,
-    'uSaturation' | 'uGrainAmount' | 'uBandScale' | 'uDrift' | 'uBaseAlpha'
+    | 'uSaturation'
+    | 'uGrainAmount'
+    | 'uGrainScale'
+    | 'uGrainDensity'
+    | 'uBandScale'
+    | 'uDrift'
+    | 'uBaseAlpha'
   >,
 ): IridescentPreset => ({
   uColorA: new THREE.Color(colors[0]),
@@ -162,7 +201,9 @@ export const iridescentPresets = {
   /** Тессеракт: цветное стекло — тело прозрачное, кромки плотные */
   tesseract: preset(['#2bb89a', '#e14bd1', '#7b5cfa', '#f2a93b'], '#fafaf7', {
     uSaturation: 1,
-    uGrainAmount: 0.045,
+    uGrainAmount: 1,
+    uGrainScale: 70,
+    uGrainDensity: 0.26,
     uBandScale: 1.7,
     uDrift: 0.13,
     uBaseAlpha: 0.3,
@@ -170,7 +211,10 @@ export const iridescentPresets = {
   /** Кнопка меню на первом экране — белая сфера */
   iconWhite: preset(['#d8d8d6', '#ffffff', '#eaeaea', '#f7f7f6'], '#ffffff', {
     uSaturation: 0.08,
-    uGrainAmount: 0.02,
+    // На 52 пикселях крапины превратились бы в грязь
+    uGrainAmount: 0,
+    uGrainScale: 60,
+    uGrainDensity: 0.2,
     uBandScale: 1,
     uDrift: 0.03,
     uBaseAlpha: 1,
@@ -178,7 +222,9 @@ export const iridescentPresets = {
   /** Спираль раздела 2 — сине-голубо-зелёная */
   spiral: preset(['#3fd0e0', '#2bb89a', '#3b82f6', '#0e7c86'], '#eafcff', {
     uSaturation: 1,
-    uGrainAmount: 0.05,
+    uGrainAmount: 0.85,
+    uGrainScale: 130,
+    uGrainDensity: 0.28,
     uBandScale: 1.35,
     uDrift: 0.06,
     uBaseAlpha: 1,
@@ -186,7 +232,9 @@ export const iridescentPresets = {
   /** Глобус в хедере раздела 2 — монохром, тёмные тона */
   iconDark: preset(['#000000', '#2a2a2a', '#141414', '#232323'], '#3a3a3a', {
     uSaturation: 0.12,
-    uGrainAmount: 0.03,
+    uGrainAmount: 0,
+    uGrainScale: 60,
+    uGrainDensity: 0.2,
     uBandScale: 1.1,
     uDrift: 0.03,
     uBaseAlpha: 1,
