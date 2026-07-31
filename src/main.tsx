@@ -6,6 +6,9 @@ import '@fontsource/inter/latin-400.css';
 import '@fontsource/inter/latin-500.css';
 import '@fontsource/inter/cyrillic-400.css';
 import '@fontsource/inter/cyrillic-500.css';
+// Только для счётчика загрузки — сверхлёгкое начертание, цифры латиницей
+import '@fontsource/jetbrains-mono/latin-200.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
 import './index.css';
 import './styles/tokens.css';
 import App from './App.tsx';

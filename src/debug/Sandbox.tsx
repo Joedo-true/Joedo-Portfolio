@@ -16,12 +16,12 @@ import { PixelReveal } from '../components/PixelReveal/PixelReveal';
  * пиксельное проявление текста.
  */
 
-const presetNames = ['tesseract', 'iconLight', 'spiral', 'iconDark'] as const;
+const presetNames = ['tesseract', 'iconWhite', 'spiral', 'iconDark'] as const;
 type PresetName = (typeof presetNames)[number];
 
 const presetLabels: Record<PresetName, string> = {
   tesseract: 'Тессеракт — цветной',
-  iconLight: 'Иконка — монохром светлый',
+  iconWhite: 'Кнопка меню — белая сфера',
   spiral: 'Спираль — сине-зелёная',
   iconDark: 'Глобус — монохром тёмный',
 };

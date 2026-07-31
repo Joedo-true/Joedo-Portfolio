@@ -40,13 +40,51 @@
   --font-nav-tracking: 0.02em;
   --font-body-size: 17px;
   --font-body-leading: 1.55;
-  /* Крупнее ориентира ТЗ (14–16px): на пустом загрузочном экране счётчик —
-     единственный элемент, и в 15px он терялся */
-  --font-counter-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  /* Счётчик — единственный элемент на пустом экране, поэтому он крупный и на
+     своём шрифте. Это отступление от «только Inter» из ТЗ: сверхлёгкий
+     технический моноширинный с табличными цифрами держит большой кегль
+     заметно лучше, чем Inter. */
+  --font-counter-family: 'JetBrains Mono', ui-monospace, monospace;
+  --font-counter-size: clamp(3.25rem, 8vw, 7rem);
 
   /* ——— Тема (переключается стором, см. useSiteStore) ——— */
   --bg: var(--bg-dark);
   --text: var(--text-on-dark);
+}
+
+/* ——— Загрузочный экран ——— */
+
+/* Пока идёт загрузка, страницу листать нельзя */
+html.is-loading,
+html.is-loading body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+.loader-counter {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.06em;
+  font-family: var(--font-counter-family);
+  font-size: var(--font-counter-size);
+  /* ExtraLight: на таком кегле тонкий штрих читается как приборная шкала,
+     а не как жирная цифра посреди экрана */
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  color: var(--text-on-dark);
+  /* Табличные цифры: иначе ширина счётчика прыгает на каждом разряде */
+  font-variant-numeric: tabular-nums;
+}
+
+.loader-counter__unit {
+  font-size: 0.26em;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  transform: translateY(0.55em);
 }
 
 /* ——— Первый экран (Фазы 1–2) ——— */

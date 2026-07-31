@@ -2,17 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import type * as THREE from 'three';
 import gsap from 'gsap';
-import { Tesseract } from '../../three/objects/Tesseract';
 import { Globe } from '../../three/objects/Globe';
 import { iridescentPresets } from '../../three/shaders/iridescentMaterial';
 import { useSiteStore, type HeaderIcon } from '../../store/useSiteStore';
 
 /**
- * Кнопка меню: тессеракт в разделе 1, глобус в разделе 2 (ТЗ 7.3 и 8.5).
+ * Кнопка меню: белая сфера на первом экране, тёмный глобус в разделе 2.
  *
- * Смена формы идёт через пиксельное проявление: силуэт разваливается в
- * мозаику, под ней геометрия подменяется, затем мозаика собирается обратно уже
- * новой формой. Мгновенная подмена брифом запрещена.
+ * ТЗ 7.3 ставило сюда уменьшенный тессеракт, но на 52 пикселях 32 трубы
+ * читались плохо, и по прямому указанию форма заменена на сферу. Смена
+ * раскраски на пороге темы осталась как в ТЗ 8.5.
+ *
+ * Переход идёт через пиксельное проявление: изображение разваливается в
+ * мозаику, под ней материал подменяется, затем мозаика собирается обратно.
+ * Мгновенная подмена брифом запрещена.
  *
  * Мозаика получается без шейдера и без render target: буфер холста сжимается
  * до нескольких пикселей, а браузер растягивает его обратно без интерполяции.
@@ -89,14 +92,11 @@ export function MenuIcon() {
         renderer.current = gl;
       }}
     >
-      {shown === 'tesseract' ? (
-        /* Угол подобран так, чтобы в 52 пикселях ещё читалось «куб в кубе» */
-        <group rotation={[-0.42, 0.68, 0]} scale={1.05}>
-          <Tesseract preset={iridescentPresets.iconLight} tubeRadius={0.1} />
-        </group>
-      ) : (
-        <Globe preset={iridescentPresets.iconDark} />
-      )}
+      <Globe
+        preset={
+          shown === 'tesseract' ? iridescentPresets.iconWhite : iridescentPresets.iconDark
+        }
+      />
     </Canvas>
   );
 }

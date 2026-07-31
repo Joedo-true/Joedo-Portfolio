@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import gsap from 'gsap';
-import { IridescentMaterial, type IridescentPreset } from '../shaders/iridescentMaterial';
+import { createIridescentMaterial, type IridescentPreset } from '../shaders/iridescentMaterial';
 
 /**
  * Спираль раздела 2 (ТЗ 2.2 и 8.3).
@@ -54,14 +54,7 @@ export function Spiral({ preset }: { preset: IridescentPreset }) {
   const lower = useRef<THREE.Mesh>(null);
   const spin = useRef<THREE.Group>(null);
 
-  // Пресет — сразу при создании, чтобы первый кадр не ушёл палитрой по умолчанию
-  const material = useMemo(() => {
-    const instance = new IridescentMaterial() as THREE.ShaderMaterial;
-    for (const [name, value] of Object.entries(preset)) {
-      if (instance.uniforms[name]) instance.uniforms[name].value = value;
-    }
-    return instance;
-  }, [preset]);
+  const material = useMemo(() => createIridescentMaterial(preset), [preset]);
 
   const geometries = useMemo(
     () => ({

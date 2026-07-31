@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { IridescentMaterial, type IridescentPreset } from '../shaders/iridescentMaterial';
+import { createIridescentMaterial, type IridescentPreset } from '../shaders/iridescentMaterial';
 
 /**
  * Глобус — форма кнопки меню в разделе 2 (ТЗ 8.5). Сфера на том же
@@ -19,16 +18,7 @@ export function Globe({
   preset: IridescentPreset;
   radius?: number;
 }) {
-  // Пресет применяем при создании материала, а не в эффекте: иначе первый
-  // кадр успевает отрисоваться палитрой по умолчанию — на мобильном глобус
-  // мигал радужным вместо монохром-тёмного.
-  const material = useMemo(() => {
-    const instance = new IridescentMaterial() as THREE.ShaderMaterial;
-    for (const [name, value] of Object.entries(preset)) {
-      if (instance.uniforms[name]) instance.uniforms[name].value = value;
-    }
-    return instance;
-  }, [preset]);
+  const material = useMemo(() => createIridescentMaterial(preset), [preset]);
 
   const reduced = useMemo(
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,

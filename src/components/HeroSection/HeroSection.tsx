@@ -38,7 +38,7 @@ export function HeroSection() {
         className="pointer-events-none absolute inset-0 z-[5]"
         style={{
           background:
-            'radial-gradient(ellipse 46% 40% at 50% 52%, rgba(10,10,11,0.72) 0%, rgba(10,10,11,0.48) 50%, rgba(10,10,11,0.18) 76%, transparent 100%)',
+            'radial-gradient(ellipse 44% 38% at 50% 52%, rgba(10,10,11,0.6) 0%, rgba(10,10,11,0.4) 50%, rgba(10,10,11,0.14) 76%, transparent 100%)',
         }}
       />
 

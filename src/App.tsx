@@ -68,6 +68,23 @@ function DeferredNav({ visible }: { visible: boolean }) {
   );
 }
 
+/**
+ * Пока идёт загрузка, страницу листать нельзя: иначе первый экран можно
+ * промотать раньше, чем он собрался. Заодно сбрасываем позицию — браузер
+ * восстанавливает её при перезагрузке.
+ */
+function useScrollLockWhileLoading() {
+  const isLoaded = useSiteStore((state) => state.isLoaded);
+
+  useEffect(() => {
+    if (isLoaded) return;
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+    document.documentElement.classList.add('is-loading');
+    return () => document.documentElement.classList.remove('is-loading');
+  }, [isLoaded]);
+}
+
 /** Тема живёт на корне документа: её читают все новые компоненты (ТЗ 4.2) */
 function useThemeAttribute() {
   const theme = useSiteStore((state) => state.theme);
@@ -78,6 +95,7 @@ function useThemeAttribute() {
 
 export default function App() {
   useThemeAttribute();
+  useScrollLockWhileLoading();
   // Одна развилка на две шапки: пока идут новые экраны — работает шапка из ТЗ,
   // в старой части страницы её сменяет прежняя навигация
   const pastNewScreens = usePastNewScreens();

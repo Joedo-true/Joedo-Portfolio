@@ -63,21 +63,19 @@ export function LoadingScreen() {
   if (isLoaded) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center pb-10">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center pb-12">
       <p
         ref={counter}
+        className="loader-counter"
         aria-live="polite"
         aria-label={`Загрузка ${Math.floor(progress)} процентов`}
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: 'var(--font-counter-size)',
-          fontWeight: 400,
-          color: 'var(--text-on-dark)',
-          // Табличные цифры: иначе ширина счётчика прыгает на каждом разряде
-          fontVariantNumeric: 'tabular-nums',
-        }}
       >
-        {String(Math.floor(progress)).padStart(3, '0')}
+        <span className="loader-counter__value">
+          {String(Math.floor(progress)).padStart(3, '0')}
+        </span>
+        <span className="loader-counter__unit" aria-hidden>
+          %
+        </span>
       </p>
     </div>
   );
