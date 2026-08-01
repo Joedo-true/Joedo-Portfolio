@@ -9,7 +9,10 @@ import {
 import { useSiteStore, type HeaderIcon } from '../../store/useSiteStore';
 
 /**
- * Кнопка меню: белая сфера на первом экране, тёмная в разделе 2.
+ * Кнопка меню: голубая сфера на первом экране, тёмная в разделе 2.
+ *
+ * Голубая берёт тот же пресет, что и частицы тессеракта, — не похожий
+ * оттенок, а буквально один и тот же источник цвета.
  *
  * Цвет меняется не сам по себе, а через удар: сфера плавно расходится на две
  * полусферы, затем схлопывается обратно — быстро, но с плавным разгоном, —
@@ -57,7 +60,7 @@ function MenuSphere() {
   const material = useMemo(
     () =>
       createIridescentMaterial(
-        shown === 'tesseract' ? iridescentPresets.iconWhite : iridescentPresets.iconDark,
+        shown === 'tesseract' ? iridescentPresets.particles : iridescentPresets.iconDark,
       ),
     [shown],
   );

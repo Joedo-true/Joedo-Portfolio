@@ -161,18 +161,11 @@ export const iridescentPresets = {
     uDrift: 0.13,
     uBaseAlpha: 0.3,
   }),
-  /** Частицы тессеракта — светло-голубые, «водные» */
+  /** Частицы тессеракта и сфера кнопки меню — светло-голубые, «водные» */
   particles: preset(['#cdeffa', '#93dcf5', '#6ec9ea', '#eaf8fe'], '#f8feff', {
     uSaturation: 1,
     uBandScale: 1.2,
     uDrift: 0.08,
-    uBaseAlpha: 1,
-  }),
-  /** Кнопка меню на первом экране — белая сфера */
-  iconWhite: preset(['#d8d8d6', '#ffffff', '#eaeaea', '#f7f7f6'], '#ffffff', {
-    uSaturation: 0.08,
-    uBandScale: 1,
-    uDrift: 0.03,
     uBaseAlpha: 1,
   }),
   /** Спираль раздела 2 — сине-голубо-зелёная */
