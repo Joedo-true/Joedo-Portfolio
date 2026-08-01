@@ -23,6 +23,14 @@ const RADIUS = 1.1;
 /** Насколько расходится каждая половина, мировых единиц */
 const GAP = 0.38;
 
+/**
+ * Наклон плоскости раздела. Полосы цвета в шейдере идут по нормали с весами
+ * 1 по Y и 0.35 по X, значит ось цветового градиента отклонена от вертикали
+ * ровно на atan(0.35) ≈ 19°. Раскалываем сферу по той же оси, чтобы срез шёл
+ * вдоль цвета, а не поперёк него.
+ */
+const COLOR_AXIS_TILT = Math.atan(0.35);
+
 function MenuSphere() {
   const target = useSiteStore((state) => state.headerIcon);
   const [shown, setShown] = useState<HeaderIcon>(target);
@@ -105,7 +113,9 @@ function MenuSphere() {
   });
 
   return (
-    <>
+    // Наклон всей связки: сфера от поворота не меняется (её вид одинаков с
+    // любой стороны), меняется только направление, вдоль которого идёт раскол
+    <group rotation={[0, 0, -COLOR_AXIS_TILT]}>
       {/* key по материалу обязателен: primitive в R3F не реактивен, и без
           перемонтирования на мешах остался бы прежний материал — половины
           схлопывались бы, не меняя цвета */}
@@ -127,7 +137,7 @@ function MenuSphere() {
           <primitive key={material.uuid} object={material} attach="material" />
         </mesh>
       </group>
-    </>
+    </group>
   );
 }
 
@@ -136,7 +146,12 @@ export function MenuIcon() {
     <Canvas
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true }}
-      camera={{ position: [0, 0, 4.6], fov: 42 }}
+      // Камера приподнята и смотрит сверху вниз. Строго сбоку плоскость среза
+      // видна с ребра, и разъехавшиеся половины выглядят двумя плоскими
+      // полукругами; сверху виден сам срез — и они читаются как объём.
+      // Силуэт сферы от этого не меняется: она одинакова с любой стороны.
+      camera={{ position: [0, 1.5, 4.35], fov: 42 }}
+      onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
       style={{ pointerEvents: 'none' }}
     >
       <MenuSphere />
