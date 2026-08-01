@@ -134,8 +134,8 @@ export function ParticleTesseract({
   shape,
   preset,
   formed,
-  count = 6500,
-  particleRadius = 0.0075,
+  count = 11000,
+  particleRadius = 0.0045,
 }: {
   shape: TesseractShape;
   preset: IridescentPreset;
