@@ -137,7 +137,7 @@ html.is-loading body {
 .section2 {
   position: relative;
   z-index: 10;
-  min-height: 170vh;
+  min-height: 130vh;
   /* Кросс-фейд темы, а не скачок (ТЗ 8.2) */
   transition:
     background-color 0.5s cubic-bezier(0.65, 0, 0.35, 1),
