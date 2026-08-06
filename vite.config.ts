@@ -21,11 +21,11 @@ export default defineConfig(({ mode }) => {
       : {
           rollupOptions: {
             output: {
-              // Разделяем вендоры для лучшего кэширования и быстрой первой загрузки
+              // three тянет за собой почти весь вес сборки — отдельным файлом
+              // он кэшируется и не перекачивается при правках сайта
               manualChunks: {
                 react: ['react', 'react-dom'],
-                motion: ['framer-motion'],
-                charts: ['recharts'],
+                three: ['three', '@react-three/fiber'],
               },
             },
           },

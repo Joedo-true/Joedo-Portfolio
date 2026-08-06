@@ -1,36 +1,38 @@
 <!doctype html>
-<html lang="ru" class="scroll-smooth">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       rel="icon"
       type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22%230F172A%22%2F%3E%3Cpath%20d%3D%22M20%2022%20L12%2032%20L20%2042%20M44%2022%20L52%2032%20L44%2042%20M36%2018%20L28%2046%22%20stroke%3D%22%238B5CF6%22%20stroke-width%3D%224.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E"
+      href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20fill%3D%22%23000%22%2F%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2220%22%20fill%3D%22%232a6fb0%22%2F%3E%3Cpath%20d%3D%22M32%2016%20l10%206%20v12%20l-10%206%20-10%20-6%20v-12%20z%22%20fill%3D%22%234e8a45%22%2F%3E%3C%2Fsvg%3E"
     />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Joedo — фронтенд-разработчик на React. Создаю быстрые интерактивные веб-интерфейсы: калькуляторы, CRM-системы и умные каталоги, которые превращают посетителей в клиентов."
+      content="Планета из шестиугольников: материки, песчаные берега и реки, рынок, АЭС и обсерватория. Нажмите на планету, чтобы подлететь ближе."
     />
-    <meta name="theme-color" content="#0B0B0D" />
 
-    <!-- Open Graph -->
+    <title>Планета</title>
+
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Joedo.dev — Фронтенд-разработчик на React" />
+    <meta property="og:title" content="Планета" />
     <meta
       property="og:description"
-      content="Быстрые и интерактивные веб-интерфейсы на React, которые превращают посетителей в клиентов."
+      content="Планета из шестиугольников: материки, песчаные берега и реки, рынок, АЭС и обсерватория."
     />
 
-    <title>Joedo.dev — Фронтенд-разработчик на React</title>
-
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
-    />
+    <style>
+      /* Чёрное полотно до того, как приедет CSS сборки: иначе первый кадр
+         мигает белым, а сайт начинается с полёта в темноте */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

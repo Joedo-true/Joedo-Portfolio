@@ -1,24 +1,37 @@
-# Sollers Shop
+# Планета
 
-Frontend SPA of an online store: Vite + React 19 + TypeScript, Tailwind CSS,
-Zustand (cart), Framer Motion, Lenis (smooth scroll). The catalog is a local
-database (`src/data/catalog.json`, 194 real products) — see `README.md`.
+Single-screen WebGL site: Vite + React 18 + TypeScript, three.js via
+`@react-three/fiber`, GSAP (camera), Zustand (phase). No CSS framework — one
+plain `src/index.css`, because the whole site is two layers over a canvas.
 
-Two builds share one config: `npm run build` → self-contained `dist/index.html`
-(opens via `file://`, committed); `npm run build:pages` → multi-file bundle used
-by the GitHub Pages workflow. After changing anything under `src/`, rebuild the
-committed single-file `dist/index.html`.
+There is no text content and no scrolling. The site is a loading screen (2D
+canvas star-warp), a "sudden stop" transition, and a procedurally generated
+hex-tiled planet you can click to fly closer and rotate with the mouse. See
+`README.md`.
+
+Everything tunable lives in `src/config.ts` and is mirrored both to CSS custom
+properties on `:root` and to `window.SITE_CONFIG`, synced bidirectionally every
+200 ms, so live-editing extensions can drive it. Keys marked `rebuild` in that
+file define the planet geometry and only apply on reload.
+
+Two builds share one config: `npm run build` → multi-file `dist/` used by the
+GitHub Pages workflow; `npm run build:standalone` → self-contained
+`standalone/index.html` (opens via `file://`, committed). After changing anything
+under `src/`, rebuild the committed `standalone/index.html`.
+
+The planet must stay deterministic: the landscape is generated from
+`planet.seed` alone, and there must be no `Math.random` anywhere on the
+generation path.
 
 ## Design rules — MANDATORY, not advisory
 
-**`.agents/skills/no-ai-slop/SKILL.md` is binding for every piece of UI work in
-this repository.** Read it before creating, styling, redesigning, or reviewing
-any component, page, palette, animation, or piece of UI copy — including changes
-that look trivial. It is not an optional style guide and not a suggestion to
-weigh against convenience.
+**These rules are binding for every piece of UI work in this repository.** Read
+them before creating, styling, redesigning, or reviewing any component, page,
+palette, animation, or piece of UI copy — including changes that look trivial.
+They are not an optional style guide and not a suggestion to weigh against
+convenience.
 
-The core requirements, restated so they apply even when the skill file is not
-loaded:
+The core requirements:
 
 1. **Define tokens before writing code.** Pin down, in this order: subject →
    type (a deliberate display/body pairing) → layout (intent + rough wireframe)
@@ -43,17 +56,11 @@ loaded:
 6. **Run the same checklist when reviewing.** Name the specific tell, and
    propose one concrete alternative tied to the actual subject.
 
-**Precedence** (from the skill itself): an explicit direction in the brief or in
-an established design system wins — the rules fill the gaps a brief leaves open,
-they do not override a choice the user has already made deliberately. Absent
-such a direction, these rules are the default and must be followed.
+**Precedence**: an explicit direction in the brief or in an established design
+system wins — the rules fill the gaps a brief leaves open, they do not override a
+choice the user has already made deliberately. Absent such a direction, these
+rules are the default and must be followed.
 
 Applying these rules to existing code is a change like any other: if following
 them means reworking UI the user did not ask you to touch, say what violates the
 rules and get agreement first rather than redesigning unprompted.
-
-## Other skills
-
-`.agents/skills/` also holds design/animation skills from `emilkowalski/skill`
-(`apple-design`, `emil-design-eng`, `review-animations`, `improve-animations`,
-and others). These are available, not mandatory; `no-ai-slop` is the binding one.

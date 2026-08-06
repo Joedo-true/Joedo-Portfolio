@@ -1,126 +1,76 @@
-import { useEffect, useState } from 'react';
-import { Header } from './components/Header';
-import { SiteHeader } from './components/Header/SiteHeader';
-import { HeroSection } from './components/HeroSection/HeroSection';
-import { Section2 } from './components/Section2/Section2';
-import { useSiteStore } from './store/useSiteStore';
-import { Services } from './components/Services';
-import { Projects } from './components/Projects';
-import { Skills } from './components/Skills';
-import { Workflow } from './components/Workflow';
-import { Contact } from './components/Contact';
-import { Footer } from './components/Footer';
-import { ScanlineOverlay } from './components/ui/ScanlineOverlay';
-import { site } from './data/site';
-
-/** Бегущая строка — единственный постоянно движущийся элемент между секциями */
-function MarqueeBand() {
-  const items = [...site.marquee, ...site.marquee];
-  return (
-    <div className="rule-t overflow-hidden py-4">
-      <div className="flex w-max animate-marquee items-center">
-        {items.map((t, i) => (
-          <span key={i} className="flex items-center whitespace-nowrap">
-            <span className="px-6 font-mono text-[12px] uppercase tracking-mega text-white/45">
-              {t}
-            </span>
-            <span aria-hidden className="text-white/25">
-              ◆
-            </span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Старая навигация нужна секциям ниже, но на новых экранах спорит с шапкой из
- * ТЗ — они обе висят в тех же углах. Поэтому пилюлю показываем только после
- * раздела 2, то есть уже в старой части страницы.
- */
-function usePastNewScreens() {
-  const [past, setPast] = useState(false);
-
-  useEffect(() => {
-    const anchor = document.getElementById('section2');
-    if (!anchor) return;
-    const observer = new IntersectionObserver(([entry]) => setPast(!entry.isIntersecting), {
-      threshold: 0,
-    });
-    observer.observe(anchor);
-    return () => observer.disconnect();
-  }, []);
-
-  return past;
-}
-
-function DeferredNav({ visible }: { visible: boolean }) {
-  return (
-    <div
-      className={`transition-opacity duration-300 ${
-        visible ? 'opacity-100' : 'pointer-events-none opacity-0'
-      }`}
-      aria-hidden={!visible}
-    >
-      <Header />
-    </div>
-  );
-}
-
-/**
- * Пока идёт загрузка, страницу листать нельзя: иначе первый экран можно
- * промотать раньше, чем он собрался. Заодно сбрасываем позицию — браузер
- * восстанавливает её при перезагрузке.
- */
-function useScrollLockWhileLoading() {
-  const isLoaded = useSiteStore((state) => state.isLoaded);
-
-  useEffect(() => {
-    if (isLoaded) return;
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    window.scrollTo(0, 0);
-    document.documentElement.classList.add('is-loading');
-    return () => document.documentElement.classList.remove('is-loading');
-  }, [isLoaded]);
-}
-
-/** Тема живёт на корне документа: её читают все новые компоненты (ТЗ 4.2) */
-function useThemeAttribute() {
-  const theme = useSiteStore((state) => state.theme);
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-}
+import { useEffect } from 'react';
+import { config, startConfigBridge } from './config';
+import { buildPlanet } from './planet/buildPlanet';
+import { useAppStore } from './state/useAppStore';
+import { Scene } from './scene/Scene';
+import { LoadingScreen } from './ui/LoadingScreen';
+import { BackButton } from './ui/BackButton';
 
 export default function App() {
-  useThemeAttribute();
-  useScrollLockWhileLoading();
-  // Одна развилка на две шапки: пока идут новые экраны — работает шапка из ТЗ,
-  // в старой части страницы её сменяет прежняя навигация
-  const pastNewScreens = usePastNewScreens();
+  const phase = useAppStore((state) => state.phase);
+
+  useEffect(() => {
+    const stopBridge = startConfigBridge();
+    const store = useAppStore.getState();
+    const timers: number[] = [];
+    let cancelled = false;
+    const startedAt = performance.now();
+
+    buildPlanet((value) => {
+      if (!cancelled) store.setProgress(value);
+    })
+      .catch((error) => {
+        // Показать ошибку негде — на сайте нет ни строчки текста, поэтому
+        // отправляем её туда, где её найдут
+        console.error('Планета не собралась', error);
+        return null;
+      })
+      .then((data) => {
+        if (cancelled || !data) return;
+        store.setPlanet(data);
+
+        // Планета обычно собирается быстрее, чем полёт успевает прочитаться.
+        // Держим экран загрузки до минимальной длительности — но ни секунды
+        // сверх готовности данных
+        const wait = Math.max(0, config.loader.minDurationMs - (performance.now() - startedAt));
+        timers.push(
+          window.setTimeout(() => {
+            store.setPhase('entry');
+            timers.push(
+              window.setTimeout(() => store.setPhase('idle'), config.entry.durationMs),
+            );
+          }, wait),
+        );
+      });
+
+    return () => {
+      cancelled = true;
+      stopBridge();
+      for (const id of timers) window.clearTimeout(id);
+    };
+  }, []);
+
+  // Escape — второй способ вернуться, для тех, кто не пользуется мышью
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && useAppStore.getState().phase === 'zoomed') {
+        useAppStore.getState().setPhase('idle');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const loading = phase === 'loading' || phase === 'entry';
 
   return (
-    <div className="relative min-h-screen">
-      <SiteHeader hidden={pastNewScreens} />
-      <DeferredNav visible={pastNewScreens} />
-      <main>
-        {/* Первый экран прилипший — раздел 2 наезжает и закрывает его (ТЗ 8.1) */}
-        <div className="relative h-[100svh]">
-          <div className="sticky top-0">
-            <HeroSection />
-          </div>
-        </div>
-        <Section2 />
-        <MarqueeBand />
-        <Services />
-        <Projects />
-        <Skills />
-        <Workflow />
-        <Contact />
-      </main>
-      <Footer />
-      <ScanlineOverlay />
-    </div>
+    <>
+      <Scene />
+      {loading && <LoadingScreen />}
+      <BackButton />
+      <p className="sr-only" role="status">
+        {loading ? 'Планета собирается' : 'Планета готова. Нажмите на неё, чтобы подлететь ближе'}
+      </p>
+    </>
   );
 }
