@@ -155,8 +155,6 @@ export function buildCloudLayer(): THREE.Group {
     const size = (0.03 + random() * 0.03) * clouds.scale;
     // Чуть разной вытянутости: одинаковые силуэты выдают штамповку
     mesh.scale.set(size * (0.9 + random() * 0.35), size * (0.75 + random() * 0.3), size);
-    // Тень от облака ползёт по земле — это и делает слой живым
-    mesh.castShadow = true;
     group.add(mesh);
   }
 

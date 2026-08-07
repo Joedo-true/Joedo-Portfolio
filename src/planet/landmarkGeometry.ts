@@ -260,12 +260,9 @@ export function buildReactor(
 }
 
 /**
- * Обсерватория: башня с раскрытым куполом, телескоп в проёме и лабораторный
- * корпус рядом.
- *
- * Купол собран из двух четвертей, разведённых в стороны, — между ними
- * остаётся щель, из которой торчит труба. Именно раскрытая щель и опознаётся
- * как обсерватория; глухой купол читается просто силосом.
+ * Обсерватория: башня с куполом, телескоп, выходящий сквозь купол, и
+ * лабораторный корпус рядом. Купол опознаётся по трубе, а не по раскрытой
+ * щели, — и это единственный вариант, в котором сквозь него ничего не видно.
  */
 export function buildObservatory(unit: number, radius: number): THREE.Group {
   const { light, dark } = materials();
@@ -295,58 +292,49 @@ export function buildObservatory(unit: number, radius: number): THREE.Group {
     );
   }
 
-  // Купол из двух половин с проёмом между ними.
+  // Купол сплошной, без проёма.
   //
-  // Оболочка тонкая, и её изнанку надо рисовать: задние грани отсекаются, и
-  // сквозь проём была видна не внутренность купола, а дыра насквозь. Плюс
-  // тёмный пол под куполом — иначе через тот же проём просматривалась башня
-  // изнутри.
-  const shellMaterial = new THREE.MeshLambertMaterial({
-    color: new THREE.Color(config.palette.structureLight),
-    flatShading: true,
-    side: THREE.DoubleSide,
-  });
-  for (const side of [-1, 1]) {
-    const shell = new THREE.Mesh(
-      new THREE.SphereGeometry(unit * 1.12, 20, 10, 0, Math.PI * 0.86, 0, Math.PI / 2),
-      shellMaterial,
-    );
-    shell.rotation.y = side > 0 ? 0.12 : Math.PI + 0.12;
-    shell.position.y = unit * 1.56;
-    group.add(shell);
-  }
-  const floor = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 1.12, unit * 1.12, unit * 0.05, 20),
-    dark,
+  // Сначала он собирался из двух половин с щелью между ними — и сквозь щель
+  // было видно насквозь: оболочка бесконечно тонкая, изнанка её не рисуется.
+  // Двусторонний материал и пол внутри дыру не закрыли: в проёме всё равно
+  // остаётся вид внутрь, а внутри пусто. Проём убран совсем — телескоп выходит
+  // прямо через купол, стык закрыт тёмным воротником. Дырке взяться неоткуда.
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(unit * 1.12, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    light,
   );
-  floor.position.y = unit * 1.55;
-  group.add(floor);
+  dome.position.y = unit * 1.56;
+  group.add(dome);
 
-  // Труба телескопа смотрит в проём купола
+  // Труба телескопа: задняя половина спрятана в куполе, наружу выходит только
+  // рабочий конец
   const tube = new THREE.Group();
   const barrel = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 0.34, unit * 0.42, unit * 2.3, 16),
+    new THREE.CylinderGeometry(unit * 0.32, unit * 0.4, unit * 2.4, 16),
     light,
   );
   barrel.rotation.z = Math.PI / 2;
+  barrel.position.x = unit * 0.55;
   tube.add(barrel);
+
+  const collar = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 0.5, unit * 0.5, unit * 0.2, 16),
+    dark,
+  );
+  collar.rotation.z = Math.PI / 2;
+  collar.position.x = unit * 1.08;
+  tube.add(collar);
+
   const cap = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 0.44, unit * 0.44, unit * 0.14, 16),
+    new THREE.CylinderGeometry(unit * 0.42, unit * 0.42, unit * 0.14, 16),
     dark,
   );
   cap.rotation.z = Math.PI / 2;
-  cap.position.x = unit * 1.15;
+  cap.position.x = unit * 1.72;
   tube.add(cap);
-  // Противовес на другом конце — без него труба висит палкой
-  const counterweight = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 0.3, unit * 0.3, unit * 0.3, 12),
-    dark,
-  );
-  counterweight.rotation.z = Math.PI / 2;
-  counterweight.position.x = -unit * 1.1;
-  tube.add(counterweight);
-  tube.position.y = unit * 1.95;
-  tube.rotation.set(0, Math.PI / 2, -0.72);
+
+  tube.position.y = unit * 1.56;
+  tube.rotation.z = 0.62;
   group.add(tube);
 
   // Лабораторный корпус
