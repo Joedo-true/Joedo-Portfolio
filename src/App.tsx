@@ -79,6 +79,23 @@ export default function App() {
       <p className="sr-only" role="status">
         {loading ? 'Планета собирается' : 'Планета готова. Нажмите на неё, чтобы подлететь ближе'}
       </p>
+
+      {/*
+        Порталы на планете открываются щелчком по холсту, а до холста нет ни
+        фокуса, ни озвучки. Эти ссылки ведут туда же и всплывают по Tab —
+        единственный способ добраться до них с клавиатуры
+      */}
+      <nav className="gates" aria-label="Переходы на другие сайты">
+        <a href={config.links.market} target="_blank" rel="noopener noreferrer">
+          Портал на рынке — Sollers Shop
+        </a>
+        <a href={config.links.reactor} target="_blank" rel="noopener noreferrer">
+          Портал у станции — AutuDash CRM
+        </a>
+        <a href={config.links.observatory} target="_blank" rel="noopener noreferrer">
+          Портал у обсерватории — FlexiCalc
+        </a>
+      </nav>
     </>
   );
 }

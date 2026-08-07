@@ -161,6 +161,24 @@ export interface Config {
     flapHz: number;
     scale: number;
   };
+  portal: {
+    /** rebuild. Ширина рамки: доля пути от угла плитки к её центру */
+    frameWidth: number;
+    /** rebuild. Насколько портал утоплен под землю, в радиусах планеты */
+    depth: number;
+    /** rebuild. Насколько рамка приподнята над плиткой */
+    lift: number;
+    /** Размах пульсации свечения, 0 — ровный свет */
+    pulse: number;
+    /** Пульсаций в секунду */
+    pulseHz: number;
+  };
+  /** Куда ведут порталы. Пусто — портал просто светится и никуда не ведёт */
+  links: {
+    market: string;
+    reactor: string;
+    observatory: string;
+  };
   light: {
     /** Основной свет — местная звезда */
     keyIntensity: number;
@@ -223,6 +241,11 @@ export interface Config {
     structureLight: string;
     structureDark: string;
     structureAccent: string;
+    /** Камень рамки вокруг портала */
+    portalFrame: string;
+    portalMarket: string;
+    portalReactor: string;
+    portalObservatory: string;
     star: string;
   };
 }
@@ -311,6 +334,18 @@ export const config: Config = {
     flapHz: 3.4,
     scale: 1,
   },
+  portal: {
+    frameWidth: 0.34,
+    depth: 0.019,
+    lift: 0.007,
+    pulse: 0.16,
+    pulseHz: 0.5,
+  },
+  links: {
+    market: 'https://joedo-true.github.io/-sollers-shop/',
+    reactor: 'https://joedo-true.github.io/-AutuDash-CRM/',
+    observatory: 'https://joedo-true.github.io/FlexiCalc/',
+  },
   light: {
     keyIntensity: 3,
     fillIntensity: 0.9,
@@ -352,6 +387,10 @@ export const config: Config = {
     structureLight: '#d9dade',
     structureDark: '#4a4d52',
     structureAccent: '#b4553f',
+    portalFrame: '#3a3f4a',
+    portalMarket: '#ff4d3d',
+    portalReactor: '#3ee07a',
+    portalObservatory: '#4a9dff',
     star: '#ffffff',
   },
 };
@@ -391,6 +430,9 @@ export const REBUILD_KEYS = new Set([
   'clouds.spread',
   'birds.flocks',
   'birds.perFlock',
+  'portal.frameWidth',
+  'portal.depth',
+  'portal.lift',
 ]);
 
 type Leaf = { path: string; cssVar: string; group: Record<string, unknown>; key: string };

@@ -64,9 +64,21 @@ export function Planet({ data }: PlanetProps) {
       tiles[index].corners[0].distanceTo(tiles[index].center);
 
     // Ставим на верхнюю грань своей плитки, а не на уровень моря: площадки
-    // подняты вместе с рельефом, и постройка иначе ушла бы в грунт
-    const place = (object: THREE.Object3D, index: number) => {
+    // подняты вместе с рельефом, и постройка иначе ушла бы в грунт.
+    //
+    // Если портал вынесен на соседнюю плитку, постройку доворачиваем вокруг
+    // своей оси так, чтобы к порталу она была обращена свободной стороной:
+    // и у станции, и у обсерватории со стороны +Z намеренно ничего не стоит.
+    // Иначе портал оказывался бы под машинным залом.
+    const place = (object: THREE.Object3D, index: number, portal: number) => {
       orientOnSphere(object, tiles[index].center, topRadius[index]);
+      if (portal !== index) {
+        object.updateMatrixWorld(true);
+        const local = object.worldToLocal(
+          tiles[portal].center.clone().multiplyScalar(topRadius[portal]),
+        );
+        object.rotateY(Math.atan2(local.x, local.z));
+      }
       object.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           child.castShadow = true;
@@ -76,23 +88,43 @@ export function Planet({ data }: PlanetProps) {
       return object;
     };
 
-    const marketTile = terrain.landmarks.market.tile;
-    const reactorTile = terrain.landmarks.reactor.tile;
-    const observatoryTile = terrain.landmarks.observatory.tile;
-
-    const reactor = buildReactor(unitAt(reactorTile), radius);
+    const { market, reactor: reactorSite, observatory } = terrain.landmarks;
+    const reactor = buildReactor(unitAt(reactorSite.tile), radius);
 
     return {
-      market: place(buildMarket(unitAt(marketTile), radius), marketTile),
-      reactor: place(reactor.group, reactorTile),
+      market: place(buildMarket(unitAt(market.tile), radius), market.tile, market.portal),
+      reactor: place(reactor.group, reactorSite.tile, reactorSite.portal),
       steam: reactor.steam,
       towerHeight: reactor.towerHeight,
-      steamRise: unitAt(reactorTile) * 2.4,
-      observatory: place(buildObservatory(unitAt(observatoryTile), radius), observatoryTile),
+      steamRise: unitAt(reactorSite.tile) * 2.4,
+      observatory: place(
+        buildObservatory(unitAt(observatory.tile), radius),
+        observatory.tile,
+        observatory.portal,
+      ),
     };
   }, [data]);
 
   const clouds = useMemo(() => buildCloudLayer(), []);
+
+  // Свет портала не зависит от солнца: он идёт изнутри, из колодца, куда
+  // солнце и не достаёт
+  const portals = useMemo(
+    () =>
+      data.portals.map((portal) => {
+        const base = new THREE.Color(portal.color);
+        return {
+          portal,
+          base,
+          material: new THREE.MeshBasicMaterial({
+            color: base.clone(),
+            side: THREE.DoubleSide,
+            toneMapped: false,
+          }),
+        };
+      }),
+    [data],
+  );
 
   useEffect(() => {
     return () => {
@@ -106,8 +138,12 @@ export function Planet({ data }: PlanetProps) {
           }
         });
       }
+      for (const { material: glow, portal } of portals) {
+        glow.dispose();
+        portal.surface.dispose();
+      }
     };
-  }, [material, landmarks, clouds]);
+  }, [material, landmarks, clouds, portals]);
 
   // Вращение мышью. Слушаем канву целиком, а не саму планету: вести
   // указатель за её край — нормально, бросать вращение на полпути — нет.
@@ -175,6 +211,30 @@ export function Planet({ data }: PlanetProps) {
     gl.domElement.style.cursor = phase === 'zoomed' ? 'grab' : '';
   }, [gl, phase]);
 
+  /**
+   * Портал под лучом указателя, если он там есть.
+   *
+   * Отдельных мишеней у порталов нет намеренно: любая мишень оказалась бы
+   * внутри сферы, которой ловится клик по планете, а обработчики вызываются от
+   * ближней к камере — сфера гасила бы событие раньше. Поэтому проверка идёт
+   * по тому же лучу: портал считается задетым, если луч проходит ближе его
+   * радиуса и портал повёрнут к нам лицом, а не находится на обратной стороне.
+   */
+  const portalUnder = (ray: THREE.Ray) => {
+    const group = spinGroup.current;
+    if (!group) return null;
+
+    const centre = new THREE.Vector3();
+    const facing = new THREE.Vector3();
+    for (const { portal } of portals) {
+      centre.copy(portal.centre).applyMatrix4(group.matrixWorld);
+      facing.copy(portal.normal).transformDirection(group.matrixWorld);
+      if (facing.dot(ray.direction) > -0.15) continue;
+      if (ray.distanceToPoint(centre) < portal.reach) return portal;
+    }
+    return null;
+  };
+
   useFrame((state, delta) => {
     const step = Math.min(delta, 0.05);
     const spin = rotation.current;
@@ -216,6 +276,14 @@ export function Planet({ data }: PlanetProps) {
       const puffMaterial = puff.material as THREE.MeshBasicMaterial;
       puffMaterial.opacity = 0.42 * Math.min(1, life * 5) * (1 - life);
     }
+
+    // Порталы дышат: ровный свет читается наклейкой, а не проходом
+    const breath = reduced
+      ? 1
+      : 1 + config.portal.pulse * Math.sin(time * config.portal.pulseHz * Math.PI * 2);
+    for (const { material: glow, base } of portals) {
+      glow.color.copy(base).multiplyScalar(breath);
+    }
   });
 
   return (
@@ -241,6 +309,16 @@ export function Planet({ data }: PlanetProps) {
             raycast={() => null}
           />
           <Flora data={data} />
+
+          {portals.map(({ portal, material: glow }) => (
+            <mesh
+              key={portal.name}
+              geometry={portal.surface}
+              material={glow}
+              raycast={() => null}
+            />
+          ))}
+
           <primitive object={landmarks.market} />
           <primitive object={landmarks.reactor} />
           <primitive object={landmarks.observatory} />
@@ -267,7 +345,18 @@ export function Planet({ data }: PlanetProps) {
         <mesh
           onClick={(event) => {
             event.stopPropagation();
+            const gate = portalUnder(event.ray);
+            if (gate) {
+              window.open(gate.url, '_blank', 'noopener,noreferrer');
+              return;
+            }
             if (useAppStore.getState().phase === 'idle') setPhase('zoomed');
+          }}
+          onPointerMove={(event) => {
+            if (rotation.current.dragging) return;
+            const overGate = portalUnder(event.ray) !== null;
+            const zoomed = useAppStore.getState().phase === 'zoomed';
+            gl.domElement.style.cursor = overGate ? 'pointer' : zoomed ? 'grab' : 'pointer';
           }}
           onPointerOver={() => {
             if (useAppStore.getState().phase === 'idle') {

@@ -103,6 +103,36 @@ body {
   }
 }
 
+/* Ссылки на порталы: не видны, пока до них не дошли табом */
+
+.gates a {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #10151f;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.gates a:focus-visible {
+  left: clamp(16px, 3vw, 28px);
+  top: clamp(72px, 9vh, 88px);
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.gates a:nth-child(2):focus-visible {
+  top: clamp(122px, 15vh, 140px);
+}
+
+.gates a:nth-child(3):focus-visible {
+  top: clamp(172px, 21vh, 192px);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

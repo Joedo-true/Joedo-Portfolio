@@ -23,11 +23,24 @@ import { config } from '../config';
  * Всё детерминировано: результат зависит только от зерна в конфиге.
  */
 
-export type Biome = 'water' | 'sand' | 'soil' | 'rock' | 'snow' | 'podzol' | 'concrete';
+export type Biome =
+  | 'water'
+  | 'sand'
+  | 'soil'
+  | 'rock'
+  | 'snow'
+  | 'podzol'
+  | 'concrete'
+  /** Плитка-портал: вместо ровного верха у неё каменная рамка и колодец */
+  | 'portal';
+
+export type LandmarkName = 'market' | 'reactor' | 'observatory';
 
 export interface LandmarkPlacement {
   /** Индекс центральной плитки */
   tile: number;
+  /** Индекс плитки-портала рядом с постройкой */
+  portal: number;
 }
 
 export interface Terrain {
@@ -402,6 +415,21 @@ export function buildTerrain(tiles: HexTile[]): Terrain {
   pave(reactor, 'concrete');
   pave(observatory, 'concrete');
 
+  // Портал — не предмет на плитке, а сама плитка: у неё вместо ровного верха
+  // каменная рамка и колодец. У рынка он в середине площади, у станции и
+  // обсерватории — на соседней плитке, потому что центральную занимает
+  // градирня или башня. Куда именно смотрит соседняя, постройка узнает потом
+  // и повернётся к ней свободным боком
+  const portalOf = (center: number, ownCentre: boolean) =>
+    ownCentre ? center : tiles[center].neighbours[0];
+
+  const marketPortal = portalOf(market, true);
+  const reactorPortal = portalOf(reactor, false);
+  const observatoryPortal = portalOf(observatory, false);
+  for (const index of [marketPortal, reactorPortal, observatoryPortal]) {
+    biome[index] = 'portal';
+  }
+
   return {
     biome,
     elevation,
@@ -413,9 +441,9 @@ export function buildTerrain(tiles: HexTile[]): Terrain {
     shoreWater,
     homeDirection,
     landmarks: {
-      market: { tile: market },
-      reactor: { tile: reactor },
-      observatory: { tile: observatory },
+      market: { tile: market, portal: marketPortal },
+      reactor: { tile: reactor, portal: reactorPortal },
+      observatory: { tile: observatory, portal: observatoryPortal },
     },
   };
 }

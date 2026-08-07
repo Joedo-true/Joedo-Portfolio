@@ -88,6 +88,7 @@ export function scatterProps(
     const tile = tiles[i];
     const biome = terrain.biome[i];
     if (biome === 'water' || biome === 'podzol' || biome === 'concrete') continue;
+    if (biome === 'portal') continue;
 
     const random = seededRandom(planet.seed + i * 2654435761);
     const unit = tile.corners[0].distanceTo(tile.center);
