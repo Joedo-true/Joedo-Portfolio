@@ -97,6 +97,12 @@ export interface Config {
     reliefHeight: number;
     /** rebuild. Больше — равнины ниже, а горы всё так же высоки */
     reliefPower: number;
+    /** rebuild. Сколько раз высота усредняется по соседям: убирает одиночные
+     *  уступы, склон становится лестницей с ровным шагом */
+    reliefSmoothing: number;
+    /** rebuild. Насколько цвет плитки подтягивается к соседям, 0..1.
+     *  Смягчает границы биомов, не делая плитку двухцветной */
+    colorBlend: number;
     /** rebuild. Выше этой доли высоты трава сменяется камнем, 0..1 */
     rockLine: number;
     /** rebuild. Выше этой доли высоты лежит снег, 0..1 */
@@ -180,8 +186,6 @@ export interface Config {
     dragSensitivity: number;
     /** Затухание инерции после отпускания, 0..1 */
     dragInertia: number;
-    /** Предел наклона планеты мышью, радианы */
-    dragMaxPitch: number;
   };
   palette: {
     /** Небо за планетой */
@@ -209,6 +213,11 @@ export interface Config {
     boulder: string;
     cloud: string;
     atmosphere: string;
+    /** Свет неба на ночной стороне и в тенях */
+    skyLight: string;
+    /** Отсвет от поверхности снизу: он вытягивает щели между плитками из
+     *  черноты, иначе глубокий уступ читается дырой в планете */
+    groundLight: string;
     structureLight: string;
     structureDark: string;
     structureAccent: string;
@@ -257,12 +266,14 @@ export const config: Config = {
     riverCount: 12,
     riverMinLength: 5,
     padRadius: 2,
-    tileGap: 0.95,
+    tileGap: 0.97,
     landLift: 0.013,
     sandLift: 0.006,
     tileDepth: 0.016,
     reliefHeight: 0.115,
     reliefPower: 1.9,
+    reliefSmoothing: 2,
+    colorBlend: 0.24,
     rockLine: 0.7,
     snowLine: 0.93,
     spinSpeed: 0.022,
@@ -305,14 +316,13 @@ export const config: Config = {
   },
   camera: {
     fov: 38,
-    idleWidthFraction: 0.6,
-    idleMaxHeightFraction: 0.86,
-    zoomWidthFraction: 0.9,
-    zoomMaxHeightFraction: 1.7,
+    idleWidthFraction: 0.48,
+    idleMaxHeightFraction: 0.69,
+    zoomWidthFraction: 0.72,
+    zoomMaxHeightFraction: 1.36,
     zoomDurationMs: 1500,
     dragSensitivity: 0.0042,
     dragInertia: 0.93,
-    dragMaxPitch: 1.05,
   },
   palette: {
     background: '#141b2e',
@@ -334,6 +344,8 @@ export const config: Config = {
     boulder: '#7d766e',
     cloud: '#e6e4ef',
     atmosphere: '#5f8fd6',
+    skyLight: '#a9b7cf',
+    groundLight: '#333d51',
     structureLight: '#d9dade',
     structureDark: '#4a4d52',
     structureAccent: '#b4553f',
@@ -363,6 +375,8 @@ export const REBUILD_KEYS = new Set([
   'planet.tileDepth',
   'planet.reliefHeight',
   'planet.reliefPower',
+  'planet.reliefSmoothing',
+  'planet.colorBlend',
   'planet.rockLine',
   'planet.snowLine',
   'flora.treeDensity',

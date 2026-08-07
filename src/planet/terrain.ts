@@ -193,39 +193,52 @@ function findSite(
   const { x: dx, y: dy, z: dz } = direction;
   const length = Math.hypot(dx, dy, dz) || 1;
   const flatEnough = 0.07;
-  let best = -1;
-  let bestDot = -Infinity;
+
   let fallback = -1;
   let fallbackDot = -Infinity;
-
   for (let i = 0; i < tiles.length; i++) {
     if (taken.has(i) || biome[i] === 'water') continue;
     const center = tiles[i].center;
     const dot = (center.x * dx + center.y * dy + center.z * dz) / length;
-
     if (dot > fallbackDot) {
       fallbackDot = dot;
       fallback = i;
     }
-
-    if (dot <= bestDot) continue;
-    const patch = collectPatch(tiles, i, clearance);
-    if (patch.some((index) => biome[index] === 'water' || taken.has(index))) continue;
-
-    let low = Infinity;
-    let high = -Infinity;
-    for (const index of patch) {
-      if (height01[index] < low) low = height01[index];
-      if (height01[index] > high) high = height01[index];
-    }
-    if (high - low > flatEnough) continue;
-
-    bestDot = dot;
-    best = i;
   }
 
-  // Совсем чистого места может не найтись — тогда просто ближайшая суша
-  return best !== -1 ? best : fallback;
+  // Запас ослабляется по шагу, а не отбрасывается разом. Раньше, если под
+  // полный запас чистого места не нашлось, поиск сразу сваливался на
+  // «ближайшую сушу» — и станция вставала на пятачок посреди океана, потому
+  // что этот пятачок и оказывался ближайшим к заданному направлению
+  for (let room = clearance; room >= 1; room--) {
+    let best = -1;
+    let bestDot = -Infinity;
+
+    for (let i = 0; i < tiles.length; i++) {
+      if (taken.has(i) || biome[i] === 'water') continue;
+      const center = tiles[i].center;
+      const dot = (center.x * dx + center.y * dy + center.z * dz) / length;
+      if (dot <= bestDot) continue;
+
+      const patch = collectPatch(tiles, i, room);
+      if (patch.some((index) => biome[index] === 'water' || taken.has(index))) continue;
+
+      let low = Infinity;
+      let high = -Infinity;
+      for (const index of patch) {
+        if (height01[index] < low) low = height01[index];
+        if (height01[index] > high) high = height01[index];
+      }
+      if (high - low > flatEnough) continue;
+
+      bestDot = dot;
+      best = i;
+    }
+
+    if (best !== -1) return best;
+  }
+
+  return fallback;
 }
 
 export function buildTerrain(tiles: HexTile[]): Terrain {
@@ -301,6 +314,24 @@ export function buildTerrain(tiles: HexTile[]): Terrain {
   for (let i = 0; i < tiles.length; i++) {
     if (biome[i] === 'water') continue;
     height01[i] = Math.min(Math.max((elevation[i] - waterLine) / span, 0), 1);
+  }
+
+  // Сглаживание высоты по соседям. Сырой шум даёт одиночные уступы: плитка на
+  // голову выше всех вокруг, потом обрыв. Пара усреднений превращает их в
+  // ровную лестницу, и склон читается склоном, а не осыпью
+  for (let pass = 0; pass < Math.max(0, Math.round(planet.reliefSmoothing)); pass++) {
+    const before = height01.slice();
+    for (let i = 0; i < tiles.length; i++) {
+      if (biome[i] === 'water') continue;
+      let sum = before[i];
+      let count = 1;
+      for (const neighbour of tiles[i].neighbours) {
+        if (biome[neighbour] === 'water') continue;
+        sum += before[neighbour];
+        count++;
+      }
+      height01[i] = before[i] * 0.45 + (sum / count) * 0.55;
+    }
   }
 
   // Выше границы леса трава сходит на камень, ещё выше ложится снег

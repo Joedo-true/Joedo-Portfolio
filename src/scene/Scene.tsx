@@ -164,7 +164,14 @@ function Atmosphere() {
         с фоном. Полусферический подсвечивает ночную сторону ровно настолько,
         чтобы там читались плитки, а не чёрный провал.
       */}
-      <hemisphereLight ref={fill} args={[0x8fa6d8, 0x1c2233, config.light.fillIntensity]} />
+      <hemisphereLight
+        ref={fill}
+        args={[
+          new THREE.Color(config.palette.skyLight),
+          new THREE.Color(config.palette.groundLight),
+          config.light.fillIntensity,
+        ]}
+      />
       {/*
         Тени бросает только основной свет, и рамка его карты обтягивает
         планету целиком: горы кладут тень на равнину, деревья — на траву.

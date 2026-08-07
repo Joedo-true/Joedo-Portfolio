@@ -145,38 +145,95 @@ export function buildReactor(
       ? 0.62 + 0.38 * Math.pow((0.72 - t) / 0.72, 1.7)
       : 0.62 + 0.26 * Math.pow((t - 0.72) / 0.28, 1.4);
 
+  const outer = unit * 1.15;
+  const mouth = outer * waistAt(1);
+  const wall = unit * 0.1;
+
+  // Профиль идёт вверх по наружной стенке, переваливает через устье и
+  // спускается внутрь. Раньше он на устье и заканчивался: труба оставалась
+  // открытой трубкой без толщины, а задние грани отсекаются — сверху зияла
+  // дыра с рваным краем
   const profile: THREE.Vector2[] = [];
-  const steps = 12;
+  const steps = 14;
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
-    profile.push(new THREE.Vector2(unit * 1.15 * waistAt(t), t * height));
+    profile.push(new THREE.Vector2(outer * waistAt(t), t * height));
   }
-  const tower = new THREE.Mesh(new THREE.LatheGeometry(profile, 22), light);
+  profile.push(new THREE.Vector2(mouth - wall, height));
+  for (let i = steps; i >= steps - 3; i--) {
+    const t = i / steps;
+    profile.push(new THREE.Vector2(outer * waistAt(t) - wall, t * height));
+  }
+  const tower = new THREE.Mesh(new THREE.LatheGeometry(profile, 32), light);
   group.add(tower);
 
-  // Обод точно по устью: шире — и получится воронка вместо градирни
-  const mouth = unit * 1.15 * waistAt(1);
-  const rim = new THREE.Mesh(
-    new THREE.CylinderGeometry(mouth * 1.04, mouth * 1.04, unit * 0.14, 22, 1, true),
+  // Дно горловины: смотреть в градирню надо в темноту, а не сквозь планету
+  const throat = new THREE.Mesh(
+    new THREE.CylinderGeometry(mouth - wall, mouth - wall, unit * 0.04, 32),
     dark,
   );
-  rim.position.y = height - unit * 0.04;
-  group.add(rim);
+  throat.position.y = height - unit * 0.62;
+  group.add(throat);
 
-  const hall = box(light, [unit * 1.7, unit * 0.9, unit * 1.1], [0, unit * 0.45, 0]);
-  const hallRoof = box(dark, [unit * 1.8, unit * 0.12, unit * 1.2], [0, unit * 0.96, 0]);
+  // Машинный зал с бочкообразной крышей
   const hallBlock = new THREE.Group();
-  hallBlock.add(hall, hallRoof);
-  group.add(seat(hallBlock, unit * 2.5, unit * 0.4, radius));
+  hallBlock.add(box(light, [unit * 2, unit * 0.85, unit * 1.2], [0, unit * 0.42, 0]));
+  const vault = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 0.62, unit * 0.62, unit * 2, 12, 1, false, 0, Math.PI),
+    dark,
+  );
+  vault.rotation.z = Math.PI / 2;
+  vault.position.y = unit * 0.85;
+  hallBlock.add(vault);
+  for (const sx of [-0.6, 0, 0.6]) {
+    hallBlock.add(box(dark, [unit * 0.22, unit * 0.34, unit * 0.06], [sx * unit, unit * 0.32, unit * 0.61]));
+  }
+  group.add(seat(hallBlock, unit * 2.6, unit * 0.4, radius));
 
-  const shed = box(light, [unit * 0.95, unit * 0.62, unit * 0.95], [0, unit * 0.31, 0], 0.4);
-  group.add(seat(shed, unit * 1.7, -unit * 1.8, radius));
-
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(unit * 0.66, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+  // Реакторный блок: цилиндр под гермокуполом — второй узнаваемый силуэт АЭС
+  const reactorBlock = new THREE.Group();
+  reactorBlock.add(
+    new THREE.Mesh(new THREE.CylinderGeometry(unit * 0.72, unit * 0.78, unit * 0.9, 20), light),
+  );
+  const containment = new THREE.Mesh(
+    new THREE.SphereGeometry(unit * 0.72, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2),
     light,
   );
-  group.add(seat(dome, -unit * 2.1, unit * 1.05, radius));
+  containment.position.y = unit * 0.45;
+  reactorBlock.add(containment);
+  const collar = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 0.8, unit * 0.8, unit * 0.08, 20, 1, true),
+    dark,
+  );
+  collar.position.y = unit * 0.45;
+  reactorBlock.add(collar);
+  const reactorPart = reactorBlock.children[0] as THREE.Mesh;
+  reactorPart.position.y = unit * 0.45;
+  group.add(seat(reactorBlock, -unit * 2.2, unit * 1.15, radius));
+
+  // Труба от зала к градирне — она связывает разрозненные коробки в станцию
+  const pipe = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 0.13, unit * 0.13, unit * 1.5, 8),
+    dark,
+  );
+  pipe.rotation.z = Math.PI / 2;
+  pipe.position.y = unit * 0.5;
+  group.add(seat(pipe, unit * 1.55, unit * 0.4, radius));
+
+  const shed = box(light, [unit * 0.95, unit * 0.62, unit * 0.95], [0, unit * 0.31, 0], 0.4);
+  group.add(seat(shed, unit * 1.5, -unit * 2, radius));
+
+  // Пара опор ЛЭП: мелочь, по которой площадка читается действующей
+  for (const [px, pz] of [
+    [-unit * 1.4, -unit * 2.1],
+    [unit * 0.2, -unit * 2.6],
+  ]) {
+    const pylon = new THREE.Group();
+    pylon.add(box(dark, [unit * 0.07, unit * 1.2, unit * 0.07], [0, unit * 0.6, 0]));
+    pylon.add(box(dark, [unit * 0.5, unit * 0.06, unit * 0.06], [0, unit * 1.05, 0]));
+    pylon.add(box(dark, [unit * 0.36, unit * 0.06, unit * 0.06], [0, unit * 0.82, 0]));
+    group.add(seat(pylon, px, pz, radius));
+  }
 
   // Пар: несколько клубов, которые компонент сцены поднимает и растворяет.
   // Материал у каждого свой — иначе не выставить им разную прозрачность.
@@ -202,51 +259,106 @@ export function buildReactor(
   return { group, steam, towerHeight: height };
 }
 
-/** Обсерватория: телескоп на вилочной опоре и лабораторный корпус с куполом */
+/**
+ * Обсерватория: башня с раскрытым куполом, телескоп в проёме и лабораторный
+ * корпус рядом.
+ *
+ * Купол собран из двух четвертей, разведённых в стороны, — между ними
+ * остаётся щель, из которой торчит труба. Именно раскрытая щель и опознаётся
+ * как обсерватория; глухой купол читается просто силосом.
+ */
 export function buildObservatory(unit: number, radius: number): THREE.Group {
   const { light, dark } = materials();
   const group = new THREE.Group();
 
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 0.95, unit * 1.15, unit * 0.45, 18),
+  // Башня
+  const tower = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 1.05, unit * 1.2, unit * 1.5, 20),
+    light,
+  );
+  tower.position.y = unit * 0.75;
+  group.add(tower);
+  const ring = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 1.12, unit * 1.12, unit * 0.12, 20, 1, true),
     dark,
   );
-  base.position.y = unit * 0.22;
-  group.add(base);
-
-  for (const sx of [-1, 1]) {
-    group.add(box(light, [unit * 0.2, unit * 1.2, unit * 0.2], [sx * unit * 0.58, unit * 1.05, 0]));
+  ring.position.y = unit * 1.5;
+  group.add(ring);
+  for (const angle of [0.4, 2.5, 4.4]) {
+    group.add(
+      box(
+        dark,
+        [unit * 0.24, unit * 0.5, unit * 0.06],
+        [Math.cos(angle) * unit * 1.05, unit * 0.75, Math.sin(angle) * unit * 1.05],
+        -angle,
+      ),
+    );
   }
 
-  // Труба телескопа: наклонена к небу, чтобы силуэт читался с орбиты
+  // Купол из двух половин с проёмом между ними
+  for (const side of [-1, 1]) {
+    const shell = new THREE.Mesh(
+      new THREE.SphereGeometry(unit * 1.12, 20, 10, 0, Math.PI * 0.86, 0, Math.PI / 2),
+      light,
+    );
+    shell.rotation.y = side > 0 ? 0.12 : Math.PI + 0.12;
+    shell.position.y = unit * 1.56;
+    group.add(shell);
+  }
+
+  // Труба телескопа смотрит в проём купола
   const tube = new THREE.Group();
   const barrel = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 0.42, unit * 0.5, unit * 2.4, 18),
+    new THREE.CylinderGeometry(unit * 0.34, unit * 0.42, unit * 2.3, 16),
     light,
   );
   barrel.rotation.z = Math.PI / 2;
   tube.add(barrel);
   const cap = new THREE.Mesh(
-    new THREE.CylinderGeometry(unit * 0.52, unit * 0.52, unit * 0.16, 18),
+    new THREE.CylinderGeometry(unit * 0.44, unit * 0.44, unit * 0.14, 16),
     dark,
   );
   cap.rotation.z = Math.PI / 2;
-  cap.position.x = unit * 1.2;
+  cap.position.x = unit * 1.15;
   tube.add(cap);
-  tube.position.y = unit * 1.65;
-  tube.rotation.z = -0.62;
+  // Противовес на другом конце — без него труба висит палкой
+  const counterweight = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 0.3, unit * 0.3, unit * 0.3, 12),
+    dark,
+  );
+  counterweight.rotation.z = Math.PI / 2;
+  counterweight.position.x = -unit * 1.1;
+  tube.add(counterweight);
+  tube.position.y = unit * 1.95;
+  tube.rotation.set(0, Math.PI / 2, -0.72);
   group.add(tube);
 
+  // Лабораторный корпус
   const lab = new THREE.Group();
-  lab.add(box(light, [unit * 1.9, unit * 0.8, unit * 1.3], [0, unit * 0.4, 0]));
-  lab.add(box(dark, [unit * 2, unit * 0.1, unit * 1.4], [0, unit * 0.85, 0]));
+  lab.add(box(light, [unit * 2.1, unit * 0.85, unit * 1.35], [0, unit * 0.42, 0]));
+  lab.add(box(dark, [unit * 2.2, unit * 0.1, unit * 1.45], [0, unit * 0.9, 0]));
+  for (const sx of [-0.62, 0, 0.62]) {
+    lab.add(box(dark, [unit * 0.3, unit * 0.32, unit * 0.06], [sx * unit, unit * 0.48, unit * 0.68]));
+  }
   const labDome = new THREE.Mesh(
-    new THREE.SphereGeometry(unit * 0.6, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.SphereGeometry(unit * 0.5, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
     light,
   );
-  labDome.position.set(unit * 0.35, unit * 0.88, 0);
+  labDome.position.set(unit * 0.62, unit * 0.92, 0);
   lab.add(labDome);
-  group.add(seat(lab, unit * 2.6, unit * 0.7, radius));
+  group.add(seat(lab, unit * 2.8, unit * 0.8, radius));
+
+  // Тарелка антенны — вторая примета научной площадки
+  const dish = new THREE.Group();
+  dish.add(box(dark, [unit * 0.08, unit * 0.55, unit * 0.08], [0, unit * 0.28, 0]));
+  const plate = new THREE.Mesh(
+    new THREE.SphereGeometry(unit * 0.42, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2.4),
+    light,
+  );
+  plate.rotation.set(-0.7, 0, 0.4);
+  plate.position.y = unit * 0.62;
+  dish.add(plate);
+  group.add(seat(dish, -unit * 2.1, -unit * 1.3, radius));
 
   return group;
 }

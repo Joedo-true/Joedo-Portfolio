@@ -99,6 +99,51 @@ function colorFor(
   }
 }
 
+/**
+ * Цвет каждой плитки, смягчённый по соседям.
+ *
+ * Без этого граница биомов — рубленая линия: зелёный, следом сразу белый.
+ * Каждая плитка остаётся одноцветной (так и было задумано), но её цвет
+ * подтягивается к окружению, и переход читается уклоном, а не ступенью.
+ *
+ * Вода и суша между собой не смешиваются: урез воды — единственная граница,
+ * которая должна остаться резкой, иначе берег превращается в кисель.
+ */
+function buildPalette(tiles: HexTile[], terrain: Terrain): Float32Array {
+  const color = new THREE.Color();
+  const raw = new Float32Array(tiles.length * 3);
+  for (let i = 0; i < tiles.length; i++) {
+    colorFor(i, terrain, color);
+    color.toArray(raw, i * 3);
+  }
+
+  const blend = THREE.MathUtils.clamp(config.planet.colorBlend, 0, 1);
+  if (blend <= 0) return raw;
+
+  const mixed = raw.slice();
+  for (let i = 0; i < tiles.length; i++) {
+    const wet = terrain.biome[i] === 'water';
+    let r = raw[i * 3];
+    let g = raw[i * 3 + 1];
+    let b = raw[i * 3 + 2];
+    let count = 1;
+
+    for (const neighbour of tiles[i].neighbours) {
+      if ((terrain.biome[neighbour] === 'water') !== wet) continue;
+      r += raw[neighbour * 3];
+      g += raw[neighbour * 3 + 1];
+      b += raw[neighbour * 3 + 2];
+      count++;
+    }
+
+    mixed[i * 3] = THREE.MathUtils.lerp(raw[i * 3], r / count, blend);
+    mixed[i * 3 + 1] = THREE.MathUtils.lerp(raw[i * 3 + 1], g / count, blend);
+    mixed[i * 3 + 2] = THREE.MathUtils.lerp(raw[i * 3 + 2], b / count, blend);
+  }
+
+  return mixed;
+}
+
 export async function buildPlanet(onProgress: (value: number) => void): Promise<PlanetData> {
   const { frequency, tileGap, tileDepth } = config.planet;
 
@@ -119,6 +164,8 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
     topRadius[i] = topRadiusFor(terrain.biome[i], terrain.height01[i]);
     if (topRadius[i] > peakRadius) peakRadius = topRadius[i];
   }
+
+  const palette = buildPalette(tiles, terrain);
 
   let vertexCount = 0;
   for (const tile of tiles) vertexCount += tile.corners.length * 9;
@@ -170,7 +217,7 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
 
     for (let i = start; i < end; i++) {
       const tile = tiles[i];
-      colorFor(i, terrain, color);
+      color.fromArray(palette, i * 3);
 
       const outer = topRadius[i];
       // Юбка идёт до уровня моря, а не на толщину плитки: у соседей разная

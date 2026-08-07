@@ -131,15 +131,17 @@ export function Planet({ data }: PlanetProps) {
 
     const move = (event: PointerEvent) => {
       if (pointer !== event.pointerId) return;
-      const { dragSensitivity, dragMaxPitch } = config.camera;
+      const { dragSensitivity } = config.camera;
       const dx = (event.clientX - lastX) * dragSensitivity;
       const dy = (event.clientY - lastY) * dragSensitivity;
       lastX = event.clientX;
       lastY = event.clientY;
 
+      // Ни по одной оси предела нет: планету можно перевернуть и докрутить
+      // до любого места, включая полюса
       const state = rotation.current;
       state.spin += dx;
-      state.pitch = THREE.MathUtils.clamp(state.pitch + dy, -dragMaxPitch, dragMaxPitch);
+      state.pitch += dy;
       // Инерция подхватывает последний рывок, а не средний за жест
       state.spinVelocity = dx;
       state.pitchVelocity = dy;
@@ -186,11 +188,7 @@ export function Planet({ data }: PlanetProps) {
       // и складывать его со скоростью значило бы крутить планету дважды
       const decay = Math.pow(config.camera.dragInertia, step * 60);
       spin.spin += spin.spinVelocity;
-      spin.pitch = THREE.MathUtils.clamp(
-        spin.pitch + spin.pitchVelocity,
-        -config.camera.dragMaxPitch,
-        config.camera.dragMaxPitch,
-      );
+      spin.pitch += spin.pitchVelocity;
       spin.spinVelocity *= decay;
       spin.pitchVelocity *= decay;
     }
