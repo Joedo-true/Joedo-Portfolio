@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { Noise3D } from './noise';
 import type { HexTile } from './hexSphere';
 import { config } from '../config';
@@ -22,7 +23,7 @@ import { config } from '../config';
  * Всё детерминировано: результат зависит только от зерна в конфиге.
  */
 
-export type Biome = 'water' | 'sand' | 'soil' | 'podzol' | 'concrete';
+export type Biome = 'water' | 'sand' | 'soil' | 'rock' | 'snow' | 'podzol' | 'concrete';
 
 export interface LandmarkPlacement {
   /** Индекс центральной плитки */
@@ -37,6 +38,14 @@ export interface Terrain {
   waterLine: number;
   /** Высота, на которой вода уже полностью тёмная */
   deepLine: number;
+  /** Высота суши, приведённая к 0..1: 0 — урез воды, 1 — вершина.
+   *  От неё зависит и подъём плитки, и камень со снегом, и граница леса */
+  height01: Float32Array;
+  /** Вода, касающаяся суши: по ней рисуется отмель */
+  shoreWater: Uint8Array;
+  /** Направление на середину самого большого материка. Планету разворачивают
+   *  так, чтобы при первом взгляде он был к зрителю, а не открытый океан */
+  homeDirection: THREE.Vector3;
   landmarks: {
     market: LandmarkPlacement;
     reactor: LandmarkPlacement;
@@ -170,17 +179,20 @@ function carveRivers(
 
 /**
  * Ближайшая к заданному направлению плитка, вокруг которой на `clearance` шагов
- * нет ни воды, ни занятой земли: объекты не должны стоять по колено в реке.
+ * нет ни воды, ни занятой земли, и площадка достаточно ровная: объекты не
+ * должны стоять по колено в реке или враскоряку на горном уступе.
  */
 function findSite(
   tiles: HexTile[],
   biome: Biome[],
-  direction: [number, number, number],
+  height01: Float32Array,
+  direction: THREE.Vector3,
   clearance: number,
   taken: Set<number>,
 ): number {
-  const [dx, dy, dz] = direction;
+  const { x: dx, y: dy, z: dz } = direction;
   const length = Math.hypot(dx, dy, dz) || 1;
+  const flatEnough = 0.07;
   let best = -1;
   let bestDot = -Infinity;
   let fallback = -1;
@@ -199,6 +211,15 @@ function findSite(
     if (dot <= bestDot) continue;
     const patch = collectPatch(tiles, i, clearance);
     if (patch.some((index) => biome[index] === 'water' || taken.has(index))) continue;
+
+    let low = Infinity;
+    let high = -Infinity;
+    for (const index of patch) {
+      if (height01[index] < low) low = height01[index];
+      if (height01[index] > high) high = height01[index];
+    }
+    if (high - low > flatEnough) continue;
+
     bestDot = dot;
     best = i;
   }
@@ -271,23 +292,84 @@ export function buildTerrain(tiles: HexTile[]): Terrain {
     if (coastal) biome[i] = 'sand';
   }
 
+  // Приведённая высота суши. Верх шкалы берём не по абсолютному максимуму —
+  // одна случайная вершина шума задрала бы её, и все остальные горы стали бы
+  // холмами
+  const peakLine = levelAtFraction(elevation, 0.985);
+  const height01 = new Float32Array(tiles.length);
+  const span = Math.max(peakLine - waterLine, 1e-4);
+  for (let i = 0; i < tiles.length; i++) {
+    if (biome[i] === 'water') continue;
+    height01[i] = Math.min(Math.max((elevation[i] - waterLine) / span, 0), 1);
+  }
+
+  // Выше границы леса трава сходит на камень, ещё выше ложится снег
+  for (let i = 0; i < tiles.length; i++) {
+    if (biome[i] !== 'soil') continue;
+    if (height01[i] >= planet.snowLine) biome[i] = 'snow';
+    else if (height01[i] >= planet.rockLine) biome[i] = 'rock';
+  }
+
+  // Отмель: вода у самого берега светлее — по этой кайме читается урез воды
+  const shoreWater = new Uint8Array(tiles.length);
+  for (let i = 0; i < tiles.length; i++) {
+    if (biome[i] !== 'water') continue;
+    if (tiles[i].neighbours.some((n) => biome[n] !== 'water')) shoreWater[i] = 1;
+  }
+
+  // Середина самого большого материка. Именно она встречает зрителя: если
+  // повернуть планету как попало, первый кадр с большой вероятностью придётся
+  // на открытый океан
+  const homeDirection = new THREE.Vector3(0, 0, 1);
+  let biggest: number[] = [];
+  for (const land of components(tiles, (i) => biome[i] !== 'water')) {
+    if (land.length > biggest.length) biggest = land;
+  }
+  if (biggest.length > 0) {
+    const sum = new THREE.Vector3();
+    for (const index of biggest) sum.add(tiles[index].center);
+    if (sum.lengthSq() > 1e-8) homeDirection.copy(sum).normalize();
+  }
+
+  // Постройки расставляются не по абсолютным направлениям, а относительно
+  // главного материка: иначе рынок с равной вероятностью оказывается посреди
+  // океана — там, где суши просто нет
+  const east = new THREE.Vector3(0, 1, 0).cross(homeDirection);
+  if (east.lengthSq() < 1e-6) east.set(1, 0, 0).cross(homeDirection);
+  east.normalize();
+  const north = new THREE.Vector3().crossVectors(homeDirection, east).normalize();
+
+  const around = (yaw: number, pitch: number) =>
+    new THREE.Vector3()
+      .addScaledVector(homeDirection, Math.cos(yaw) * Math.cos(pitch))
+      .addScaledVector(east, Math.sin(yaw) * Math.cos(pitch))
+      .addScaledVector(north, Math.sin(pitch))
+      .normalize();
+
   const taken = new Set<number>();
-  const place = (direction: [number, number, number], pad: number) => {
-    const tile = findSite(tiles, biome, direction, pad + 1, taken);
+  const place = (direction: THREE.Vector3, pad: number) => {
+    const tile = findSite(tiles, biome, height01, direction, pad + 1, taken);
     for (const index of collectPatch(tiles, tile, pad + 1)) taken.add(index);
     return tile;
   };
 
-  const market = place([0.42, 0.28, 0.86], planet.padRadius);
-  const reactor = place([-0.82, 0.12, 0.56], planet.padRadius);
-  const observatory = place([0.08, 0.78, -0.62], planet.padRadius);
+  // Рынок встречает зрителя, остальные два разнесены по разные стороны шара
+  const market = place(around(0.36, 0.14), planet.padRadius);
+  const reactor = place(around(-2.05, 0.3), planet.padRadius);
+  const observatory = place(around(2.4, -0.55), planet.padRadius);
 
-  // Площадки: под рынком подзол, под техникой — бетон
-  for (const index of collectPatch(tiles, market, planet.padRadius)) biome[index] = 'podzol';
-  for (const index of collectPatch(tiles, reactor, planet.padRadius)) biome[index] = 'concrete';
-  for (const index of collectPatch(tiles, observatory, planet.padRadius)) {
-    biome[index] = 'concrete';
-  }
+  // Площадки: под рынком подзол, под техникой — бетон. Заодно выравниваем их
+  // по высоте центральной плитки — постройка ставится в одну точку, и уступ
+  // под её краем оставил бы половину зданий висеть в воздухе
+  const pave = (center: number, kind: Biome) => {
+    for (const index of collectPatch(tiles, center, planet.padRadius)) {
+      biome[index] = kind;
+      height01[index] = height01[center];
+    }
+  };
+  pave(market, 'podzol');
+  pave(reactor, 'concrete');
+  pave(observatory, 'concrete');
 
   return {
     biome,
@@ -296,6 +378,9 @@ export function buildTerrain(tiles: HexTile[]): Terrain {
     // Глубину меряем по самой планете, а не фиксированным числом: иначе на
     // одном зерне океан весь тёмный, на другом весь светлый
     deepLine: levelAtFraction(elevation, planet.waterFraction * 0.3),
+    height01,
+    shoreWater,
+    homeDirection,
     landmarks: {
       market: { tile: market },
       reactor: { tile: reactor },

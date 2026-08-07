@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { buildHexSphere, type HexTile } from './hexSphere';
 import { buildTerrain, type Biome, type Terrain } from './terrain';
+import { scatterProps, type Scatter } from './scatter';
 import { config } from '../config';
 
 /**
@@ -11,6 +12,11 @@ import { config } from '../config';
  * неподвижен, так что одна общая сетка с цветом в вершинах — самый дешёвый
  * вариант: один вызов отрисовки на всю планету.
  *
+ * Плитки подняты по высоте ландшафта, и рельеф получается ступенчатым — это и
+ * есть язык гекс-мира: не сглаженный холм, а террасы. Юбка каждой плитки при
+ * этом опускается до уровня моря, а не на свою толщину: иначе между соседями
+ * разной высоты зияли бы дыры на всю разницу.
+ *
  * Сборка порезана на куски и отдаёт прогресс: экран загрузки показывает
  * реальную готовность, а не таймер.
  */
@@ -19,8 +25,16 @@ export interface PlanetData {
   geometry: THREE.BufferGeometry;
   tiles: HexTile[];
   terrain: Terrain;
-  /** Внешний радиус суши — по нему камера считает кадрирование */
+  /** Радиус верхней грани каждой плитки */
+  topRadius: Float32Array;
+  /** Деревья и валуны — готовые матрицы для инстансов */
+  scatter: Scatter;
+  /** Радиус, по которому камера считает кадрирование */
   radius: number;
+  /** Самая высокая точка суши — по ней ставится облачный слой */
+  peakRadius: number;
+  /** Поворот вокруг оси, при котором главный материк смотрит на камеру */
+  homeSpin: number;
 }
 
 const nextFrame = () =>
@@ -28,58 +42,83 @@ const nextFrame = () =>
     requestAnimationFrame(() => resolve());
   });
 
-function liftFor(biome: Biome): number {
-  const { landLift, sandLift } = config.planet;
-  if (biome === 'water') return 0;
-  if (biome === 'sand') return sandLift;
-  return landLift;
+/** Радиус верхней грани плитки: ровное море, ступенчатая суша */
+function topRadiusFor(biome: Biome, height01: number): number {
+  const { landLift, sandLift, reliefHeight, reliefPower } = config.planet;
+  if (biome === 'water') return 1;
+  const base = biome === 'sand' ? sandLift : landLift;
+  return 1 + base + reliefHeight * Math.pow(height01, reliefPower);
 }
 
 function colorFor(
-  biome: Biome,
-  elevation: number,
+  index: number,
   terrain: Terrain,
   target: THREE.Color,
 ): THREE.Color {
   const palette = config.palette;
   const { waterLine, deepLine } = terrain;
+  const elevation = terrain.elevation[index];
+  const height = terrain.height01[index];
 
-  switch (biome) {
+  switch (terrain.biome[index]) {
     case 'water': {
-      // Чем глубже, тем темнее: отмель у берега и русло реки заметно светлее
+      // Чем глубже, тем темнее; у самого берега — светлая отмель
       const depth = THREE.MathUtils.clamp(
         (waterLine - elevation) / Math.max(waterLine - deepLine, 1e-4),
         0,
         1,
       );
-      return target.set(palette.water).lerp(new THREE.Color(palette.waterDeep), depth);
+      target.set(palette.water).lerp(new THREE.Color(palette.waterDeep), depth);
+      if (terrain.shoreWater[index]) {
+        target.lerp(new THREE.Color(palette.waterShore), 0.32);
+      }
+      return target;
     }
     case 'sand':
       return target.set(palette.sand);
+    case 'rock': {
+      const { rockLine, snowLine } = config.planet;
+      const t = THREE.MathUtils.clamp(
+        (height - rockLine) / Math.max(snowLine - rockLine, 1e-4),
+        0,
+        1,
+      );
+      return target.set(palette.rock).lerp(new THREE.Color(palette.rockHigh), t);
+    }
+    case 'snow':
+      return target.set(palette.snow);
     case 'podzol':
       return target.set(palette.podzol);
     case 'concrete':
       return target.set(palette.concrete);
     default: {
-      const height = THREE.MathUtils.clamp((elevation - waterLine) / 0.35, 0, 1);
-      return target.set(palette.soil).lerp(new THREE.Color(palette.soilHigh), height);
+      // Трава темнеет к границе леса — низины сочнее склонов
+      const t = THREE.MathUtils.clamp(height / Math.max(config.planet.rockLine, 1e-4), 0, 1);
+      return target.set(palette.soil).lerp(new THREE.Color(palette.soilHigh), t);
     }
   }
 }
 
 export async function buildPlanet(onProgress: (value: number) => void): Promise<PlanetData> {
-  const { frequency, tileGap, tileDepth, landLift } = config.planet;
+  const { frequency, tileGap, tileDepth } = config.planet;
 
-  onProgress(0.04);
+  onProgress(0.03);
   await nextFrame();
 
   const tiles = buildHexSphere(frequency);
-  onProgress(0.4);
+  onProgress(0.34);
   await nextFrame();
 
   const terrain = buildTerrain(tiles);
-  onProgress(0.55);
+  onProgress(0.46);
   await nextFrame();
+
+  const topRadius = new Float32Array(tiles.length);
+  let peakRadius = 1;
+  for (let i = 0; i < tiles.length; i++) {
+    topRadius[i] = topRadiusFor(terrain.biome[i], terrain.height01[i]);
+    if (topRadius[i] > peakRadius) peakRadius = topRadius[i];
+  }
 
   let vertexCount = 0;
   for (const tile of tiles) vertexCount += tile.corners.length * 9;
@@ -131,11 +170,12 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
 
     for (let i = start; i < end; i++) {
       const tile = tiles[i];
-      const biome = terrain.biome[i];
-      colorFor(biome, terrain.elevation[i], terrain, color);
+      colorFor(i, terrain, color);
 
-      const outer = 1 + liftFor(biome);
-      const inner = outer - tileDepth;
+      const outer = topRadius[i];
+      // Юбка идёт до уровня моря, а не на толщину плитки: у соседей разная
+      // высота, и короткая юбка оставила бы сквозные щели в склонах
+      const inner = Math.min(1 - tileDepth, outer - tileDepth);
 
       const apex = tile.center.clone().multiplyScalar(outer);
       const top = tile.corners.map((corner) =>
@@ -154,7 +194,7 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
       }
     }
 
-    onProgress(0.55 + 0.45 * (end / tiles.length));
+    onProgress(0.46 + 0.42 * (end / tiles.length));
     await nextFrame();
   }
 
@@ -164,6 +204,22 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geometry.computeBoundingSphere();
 
+  onProgress(0.9);
+  await nextFrame();
+
+  const scatter = scatterProps(tiles, terrain, topRadius);
+
   onProgress(1);
-  return { geometry, tiles, terrain, radius: 1 + landLift };
+  return {
+    geometry,
+    tiles,
+    terrain,
+    topRadius,
+    scatter,
+    radius: 1 + config.planet.landLift,
+    peakRadius,
+    // Наклон оси — поворот вокруг Z, он не трогает направление на камеру,
+    // поэтому достаточно довернуть материк по долготе
+    homeSpin: Math.atan2(-terrain.homeDirection.x, terrain.homeDirection.z),
+  };
 }

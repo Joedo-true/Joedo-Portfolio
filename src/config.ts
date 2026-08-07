@@ -93,10 +93,75 @@ export interface Config {
     sandLift: number;
     /** rebuild. Толщина плитки */
     tileDepth: number;
+    /** rebuild. На сколько поднимается самая высокая точка суши */
+    reliefHeight: number;
+    /** rebuild. Больше — равнины ниже, а горы всё так же высоки */
+    reliefPower: number;
+    /** rebuild. Выше этой доли высоты трава сменяется камнем, 0..1 */
+    rockLine: number;
+    /** rebuild. Выше этой доли высоты лежит снег, 0..1 */
+    snowLine: number;
     /** Скорость собственного вращения, рад/с */
     spinSpeed: number;
     /** Наклон оси, градусы — как у Земли */
     tiltDeg: number;
+  };
+  flora: {
+    /** rebuild. Общая густота леса, 0 — голая планета */
+    treeDensity: number;
+    /** rebuild. Сколько деревьев помещается на одну плитку */
+    treePerTile: number;
+    /** rebuild. Масштаб лесных массивов: меньше — крупнее пятна леса */
+    forestScale: number;
+    /** rebuild. Выше этой доли высоты лес не растёт, 0..1 */
+    treeLine: number;
+    /** Размер дерева в радиусах плитки */
+    treeScale: number;
+    /** rebuild. Доля плиток с валунами, 0..1 */
+    rockChance: number;
+    /** Размер валуна в радиусах плитки */
+    rockScale: number;
+  };
+  clouds: {
+    /** rebuild */
+    count: number;
+    /** Высота облачного слоя в радиусах планеты */
+    radius: number;
+    /** rebuild. Разброс по высоте */
+    spread: number;
+    scale: number;
+    /** Скорость сноса относительно поверхности, рад/с */
+    driftSpeed: number;
+    opacity: number;
+  };
+  atmosphere: {
+    /** Радиус ореола в радиусах планеты */
+    radius: number;
+    /** Яркость ореола, 0 — выключен */
+    strength: number;
+    /** Больше — тоньше кайма у края диска */
+    power: number;
+  };
+  birds: {
+    /** rebuild. Сколько стай, 0 — небо пустое */
+    flocks: number;
+    /** rebuild */
+    perFlock: number;
+    /** Высота полёта в радиусах планеты */
+    radius: number;
+    /** Скорость по орбите, рад/с */
+    speed: number;
+    /** Взмахи в секунду */
+    flapHz: number;
+    scale: number;
+  };
+  light: {
+    /** Основной свет — местная звезда */
+    keyIntensity: number;
+    /** Подсветка ночной стороны */
+    fillIntensity: number;
+    /** Холодный контровой свет, отделяющий планету от неба */
+    rimIntensity: number;
   };
   camera: {
     fov: number;
@@ -119,15 +184,31 @@ export interface Config {
     dragMaxPitch: number;
   };
   palette: {
+    /** Небо за планетой */
+    background: string;
+    /** Ядро под плитками — его видно в щелях между ними */
+    bedrock: string;
     water: string;
     waterDeep: string;
+    /** Отмель у самого берега */
+    waterShore: string;
     sand: string;
     soil: string;
     soilHigh: string;
+    /** Голый камень выше границы леса */
+    rock: string;
+    rockHigh: string;
+    snow: string;
     /** Подзол под рынком — чуть темнее песка */
     podzol: string;
     /** Технический грунт под АЭС и обсерваторией */
     concrete: string;
+    treeDark: string;
+    treeLight: string;
+    trunk: string;
+    boulder: string;
+    cloud: string;
+    atmosphere: string;
     structureLight: string;
     structureDark: string;
     structureAccent: string;
@@ -180,8 +261,47 @@ export const config: Config = {
     landLift: 0.013,
     sandLift: 0.006,
     tileDepth: 0.016,
+    reliefHeight: 0.115,
+    reliefPower: 1.9,
+    rockLine: 0.7,
+    snowLine: 0.93,
     spinSpeed: 0.022,
     tiltDeg: 23.4,
+  },
+  flora: {
+    treeDensity: 1,
+    treePerTile: 11,
+    forestScale: 2.6,
+    treeLine: 0.62,
+    treeScale: 0.72,
+    rockChance: 0.5,
+    rockScale: 0.8,
+  },
+  clouds: {
+    count: 26,
+    radius: 1.19,
+    spread: 0.07,
+    scale: 1,
+    driftSpeed: 0.014,
+    opacity: 1,
+  },
+  atmosphere: {
+    radius: 1.35,
+    strength: 0.22,
+    power: 5,
+  },
+  birds: {
+    flocks: 4,
+    perFlock: 7,
+    radius: 1.11,
+    speed: 0.09,
+    flapHz: 3.4,
+    scale: 1,
+  },
+  light: {
+    keyIntensity: 3,
+    fillIntensity: 0.9,
+    rimIntensity: 1.1,
   },
   camera: {
     fov: 38,
@@ -195,13 +315,25 @@ export const config: Config = {
     dragMaxPitch: 1.05,
   },
   palette: {
-    water: '#2a6fb0',
-    waterDeep: '#1d4f85',
-    sand: '#d8c07a',
+    background: '#141b2e',
+    bedrock: '#1b2733',
+    water: '#2f78b4',
+    waterDeep: '#1b4a80',
+    waterShore: '#5fb3c8',
+    sand: '#dcc37c',
     soil: '#4e8a45',
-    soilHigh: '#3d6f37',
+    soilHigh: '#3a6b36',
+    rock: '#7b7168',
+    rockHigh: '#9a9089',
+    snow: '#eef3f8',
     podzol: '#bfa062',
     concrete: '#a9abaf',
+    treeDark: '#1f5f3c',
+    treeLight: '#469458',
+    trunk: '#4b3627',
+    boulder: '#7d766e',
+    cloud: '#e6e4ef',
+    atmosphere: '#5f8fd6',
     structureLight: '#d9dade',
     structureDark: '#4a4d52',
     structureAccent: '#b4553f',
@@ -229,6 +361,19 @@ export const REBUILD_KEYS = new Set([
   'planet.landLift',
   'planet.sandLift',
   'planet.tileDepth',
+  'planet.reliefHeight',
+  'planet.reliefPower',
+  'planet.rockLine',
+  'planet.snowLine',
+  'flora.treeDensity',
+  'flora.treePerTile',
+  'flora.forestScale',
+  'flora.treeLine',
+  'flora.rockChance',
+  'clouds.count',
+  'clouds.spread',
+  'birds.flocks',
+  'birds.perFlock',
 ]);
 
 type Leaf = { path: string; cssVar: string; group: Record<string, unknown>; key: string };

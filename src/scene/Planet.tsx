@@ -9,6 +9,9 @@ import {
   buildReactor,
   orientOnSphere,
 } from '../planet/landmarkGeometry';
+import { buildCloudLayer } from '../planet/props';
+import { Birds } from './Birds';
+import { Flora } from './Flora';
 import { useAppStore } from '../state/useAppStore';
 import { useReducedMotion } from '../reducedMotion';
 
@@ -37,9 +40,11 @@ export function Planet({ data }: PlanetProps) {
   const pitchGroup = useRef<THREE.Group>(null);
   const spinGroup = useRef<THREE.Group>(null);
   const tiltGroup = useRef<THREE.Group>(null);
+  const cloudGroup = useRef<THREE.Group>(null);
+  const drift = useRef(0);
 
   const rotation = useRef({
-    spin: 0,
+    spin: data.homeSpin,
     pitch: 0,
     spinVelocity: 0,
     pitchVelocity: 0,
@@ -52,14 +57,22 @@ export function Planet({ data }: PlanetProps) {
   );
 
   const landmarks = useMemo(() => {
-    const { tiles, terrain, radius } = data;
+    const { tiles, terrain, radius, topRadius } = data;
 
     /** Радиус плитки — общая единица длины для всех построек */
     const unitAt = (index: number) =>
       tiles[index].corners[0].distanceTo(tiles[index].center);
 
+    // Ставим на верхнюю грань своей плитки, а не на уровень моря: площадки
+    // подняты вместе с рельефом, и постройка иначе ушла бы в грунт
     const place = (object: THREE.Object3D, index: number) => {
-      orientOnSphere(object, tiles[index].center, radius);
+      orientOnSphere(object, tiles[index].center, topRadius[index]);
+      object.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
       return object;
     };
 
@@ -79,10 +92,12 @@ export function Planet({ data }: PlanetProps) {
     };
   }, [data]);
 
+  const clouds = useMemo(() => buildCloudLayer(), []);
+
   useEffect(() => {
     return () => {
       material.dispose();
-      for (const object of [landmarks.market, landmarks.reactor, landmarks.observatory]) {
+      for (const object of [landmarks.market, landmarks.reactor, landmarks.observatory, clouds]) {
         object.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             child.geometry.dispose();
@@ -92,7 +107,7 @@ export function Planet({ data }: PlanetProps) {
         });
       }
     };
-  }, [material, landmarks]);
+  }, [material, landmarks, clouds]);
 
   // Вращение мышью. Слушаем канву целиком, а не саму планету: вести
   // указатель за её край — нормально, бросать вращение на полпути — нет.
@@ -186,6 +201,11 @@ export function Planet({ data }: PlanetProps) {
       tiltGroup.current.rotation.z = THREE.MathUtils.degToRad(config.planet.tiltDeg);
     }
 
+    // Облака идут вместе с планетой, но чуть быстрее — за счёт этой разницы
+    // они и сносятся над поверхностью, а не приколочены к ней
+    if (!reduced) drift.current += config.clouds.driftSpeed * step;
+    if (cloudGroup.current) cloudGroup.current.rotation.y = spin.spin + drift.current;
+
     // Пар: клубы поднимаются над градирней, растут и тают. При «меньше
     // движения» время замирает — плюмаж над трубой остаётся, но стоит
     const puffs = landmarks.steam.children;
@@ -204,11 +224,35 @@ export function Planet({ data }: PlanetProps) {
     <group ref={pitchGroup}>
       <group ref={tiltGroup}>
         <group ref={spinGroup}>
-          <mesh geometry={data.geometry} material={material} raycast={() => null} />
+          {/*
+            Ядро. Плитки стоят с зазором, а планета внутри пустая: сквозь щели
+            между ними видно небо — сфера с изнанки не рисуется, задние грани
+            отсекаются. Эта заглушка закрывает просветы, и щели читаются
+            тенью между плитами, а чем они и являются
+          */}
+          <mesh raycast={() => null}>
+            <sphereGeometry args={[1 - config.planet.tileDepth * 1.6, 64, 40]} />
+            <meshBasicMaterial color={new THREE.Color(config.palette.bedrock)} />
+          </mesh>
+
+          <mesh
+            geometry={data.geometry}
+            material={material}
+            castShadow
+            receiveShadow
+            raycast={() => null}
+          />
+          <Flora data={data} />
           <primitive object={landmarks.market} />
           <primitive object={landmarks.reactor} />
           <primitive object={landmarks.observatory} />
         </group>
+
+        <group ref={cloudGroup}>
+          <primitive object={clouds} />
+        </group>
+
+        <Birds />
 
         {/*
           Мишень для указателя. Луч по сорока тысячам треугольников планеты
@@ -231,7 +275,7 @@ export function Planet({ data }: PlanetProps) {
             if (useAppStore.getState().phase !== 'zoomed') gl.domElement.style.cursor = '';
           }}
         >
-          <sphereGeometry args={[data.radius, 32, 24]} />
+          <sphereGeometry args={[data.peakRadius, 32, 24]} />
           <meshBasicMaterial colorWrite={false} depthWrite={false} />
         </mesh>
       </group>

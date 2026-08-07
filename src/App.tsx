@@ -25,9 +25,17 @@ export default function App() {
         console.error('Планета не собралась', error);
         return null;
       })
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled || !data) return;
         store.setPlanet(data);
+
+        // Ждём, пока планета реально нарисуется. Первый её кадр — самый
+        // тяжёлый: компиляция шейдеров и заливка буферов. Начать «остановку»
+        // до него значит отдать ей половину анимации
+        for (let i = 0; i < 3; i++) {
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+        }
+        if (cancelled) return;
 
         // Планета обычно собирается быстрее, чем полёт успевает прочитаться.
         // Держим экран загрузки до минимальной длительности — но ни секунды
