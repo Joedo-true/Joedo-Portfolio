@@ -179,18 +179,34 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
   const normal = new THREE.Vector3();
   const edgeA = new THREE.Vector3();
   const edgeB = new THREE.Vector3();
-  const middle = new THREE.Vector3();
+  const sideward = new THREE.Vector3();
 
-  /** Кладёт треугольник наружу: если нормаль смотрит внутрь, меняем обход */
-  const pushTriangle = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3) => {
+  /**
+   * Кладёт треугольник лицом наружу: если нормаль смотрит не туда, куда
+   * указывает `outward`, меняем обход.
+   *
+   * Направление приходит снаружи, а не выводится из самого треугольника.
+   * Раньше сторона выбиралась по знаку скалярного произведения нормали на
+   * центр треугольника — и для боковых стенок это оказалось ровно нулём:
+   * низ плитки лежит на тех же лучах из центра планеты, что и верх, поэтому
+   * плоскость стенки проходит через центр планеты, а нормаль к ней
+   * перпендикулярна любой точке этой плоскости. Знак решала ошибка округления,
+   * половина стенок выворачивалась изнанкой и пропадала — сбоку у плиток
+   * зияла пустота.
+   */
+  const pushTriangle = (
+    a: THREE.Vector3,
+    b: THREE.Vector3,
+    c: THREE.Vector3,
+    outward: THREE.Vector3,
+  ) => {
     edgeA.subVectors(b, a);
     edgeB.subVectors(c, a);
     normal.crossVectors(edgeA, edgeB).normalize();
-    middle.copy(a).add(b).add(c).multiplyScalar(1 / 3);
 
     let second = b;
     let third = c;
-    if (normal.dot(middle) < 0) {
+    if (normal.dot(outward) < 0) {
       normal.negate();
       second = c;
       third = b;
@@ -233,11 +249,20 @@ export async function buildPlanet(onProgress: (value: number) => void): Promise<
       const count = top.length;
       for (let k = 0; k < count; k++) {
         const next = (k + 1) % count;
-        // Верхняя грань веером из центра плитки
-        pushTriangle(apex, top[k], top[next]);
-        // Боковая стенка — она и создаёт ощущение толщины
-        pushTriangle(top[k], top[next], bottom[next]);
-        pushTriangle(top[k], bottom[next], bottom[k]);
+
+        // Верхняя грань веером из центра плитки: наружу — это от центра планеты
+        pushTriangle(apex, top[k], top[next], tile.center);
+
+        // Боковая стенка — она и создаёт ощущение толщины. Наружу для неё —
+        // вбок от оси плитки, к середине ребра, а не вверх
+        sideward
+          .copy(top[k])
+          .add(top[next])
+          .multiplyScalar(0.5)
+          .addScaledVector(tile.center, -0.5 * (top[k].dot(tile.center) + top[next].dot(tile.center)));
+
+        pushTriangle(top[k], top[next], bottom[next], sideward);
+        pushTriangle(top[k], bottom[next], bottom[k], sideward);
       }
     }
 

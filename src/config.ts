@@ -215,6 +215,8 @@ export interface Config {
     atmosphere: string;
     /** Свет неба на ночной стороне и в тенях */
     skyLight: string;
+    /** Холодный контровой свет, отбивающий край планеты от фона */
+    rimLight: string;
     /** Отсвет от поверхности снизу: он вытягивает щели между плитками из
      *  черноты, иначе глубокий уступ читается дырой в планете */
     groundLight: string;
@@ -344,8 +346,9 @@ export const config: Config = {
     boulder: '#7d766e',
     cloud: '#e6e4ef',
     atmosphere: '#5f8fd6',
-    skyLight: '#a9b7cf',
-    groundLight: '#333d51',
+    skyLight: '#b9bfc9',
+    rimLight: '#9fb4dc',
+    groundLight: '#39404e',
     structureLight: '#d9dade',
     structureDark: '#4a4d52',
     structureAccent: '#b4553f',

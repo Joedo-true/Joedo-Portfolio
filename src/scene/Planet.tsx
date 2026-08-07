@@ -244,13 +244,18 @@ export function Planet({ data }: PlanetProps) {
           <primitive object={landmarks.market} />
           <primitive object={landmarks.reactor} />
           <primitive object={landmarks.observatory} />
+
+          {/*
+            Стаи живут внутри вращающейся группы: снаружи до них доходил
+            только наклон, и при прокрутке планеты мышью птицы оставались
+            висеть на месте, будто прибитые к экрану
+          */}
+          <Birds />
         </group>
 
         <group ref={cloudGroup}>
           <primitive object={clouds} />
         </group>
-
-        <Birds />
 
         {/*
           Мишень для указателя. Луч по сорока тысячам треугольников планеты

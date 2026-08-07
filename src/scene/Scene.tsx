@@ -196,7 +196,7 @@ function Atmosphere() {
       <directionalLight
         ref={rim}
         position={[-7, 2, -5]}
-        color={0x8fb0ff}
+        color={new THREE.Color(config.palette.rimLight)}
         intensity={config.light.rimIntensity}
       />
 
