@@ -291,9 +291,9 @@ export const config: Config = {
     rockScale: 0.8,
   },
   clouds: {
-    count: 26,
-    radius: 1.19,
-    spread: 0.07,
+    count: 28,
+    radius: 1.155,
+    spread: 0.05,
     scale: 1,
     driftSpeed: 0.014,
     opacity: 1,

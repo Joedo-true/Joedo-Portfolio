@@ -73,33 +73,37 @@ export function buildBoulder(): THREE.BufferGeometry {
 }
 
 /**
- * Облако: горсть слипшихся шаров. Один шар читается как мяч, поэтому их
- * всегда несколько и все разного размера.
+ * Облако — горсть слипшихся шаров.
+ *
+ * Три вещи отличают кучевое облако от грозди шариков, и все три здесь есть:
+ * плоское основание (шары сажаются низами на одну плоскость, а не по центрам),
+ * шапка (к середине облака шары крупнее, к краям мельче) и вытянутость вдоль
+ * ветра. Сглаженное затенение вместо гранёного: облако — единственное в кадре,
+ * что не должно выглядеть высеченным.
  */
 export function buildCloud(seed: number): THREE.BufferGeometry {
   const random = seededRandom(seed);
   const puffs: THREE.BufferGeometry[] = [];
-  const count = 5 + Math.floor(random() * 3);
+  const count = 7 + Math.floor(random() * 4);
 
-  // Шары ставятся кучкой, а не в линию: выложенные в ряд, они читаются
-  // гусеницей, ползущей по планете
   for (let i = 0; i < count; i++) {
-    const radius = 0.42 + random() * 0.34;
-    const puff = new THREE.IcosahedronGeometry(radius, 1);
     const angle = random() * Math.PI * 2;
-    const away = Math.sqrt(random()) * 0.62;
-    puff.translate(
-      Math.cos(angle) * away,
-      (random() - 0.5) * 0.16,
-      Math.sin(angle) * away * 0.75,
-    );
+    const away = Math.pow(random(), 0.65);
+    const x = Math.cos(angle) * away * 1.05;
+    const z = Math.sin(angle) * away * 0.5;
+    // Крупные шары в середине, мелкие по краям — отсюда и форма шапки
+    const radius = 0.3 + (1 - away) * 0.4 + random() * 0.08;
+
+    const puff = new THREE.IcosahedronGeometry(radius, 2);
+    // Низ на общей плоскости: у кучевого облака основание плоское
+    puff.translate(x, radius * 0.82, z);
     puffs.push(puff);
   }
 
   const merged = mergeGeometries(puffs) as THREE.BufferGeometry;
   for (const puff of puffs) puff.dispose();
-  // Облака приплюснуты: шарообразное облако выглядит гроздью винограда
-  merged.scale(1, 0.6, 1);
+  merged.translate(0, -0.42, 0);
+  merged.computeVertexNormals();
   return merged;
 }
 
@@ -128,10 +132,9 @@ export function buildCloudLayer(): THREE.Group {
   const group = new THREE.Group();
   const clouds = config.clouds;
   const random = seededRandom(config.planet.seed + 9157);
-  const variants = [buildCloud(11), buildCloud(29), buildCloud(47), buildCloud(83)];
+  const variants = [11, 29, 47, 83, 131, 197].map((seed) => buildCloud(seed));
   const material = new THREE.MeshLambertMaterial({
     color: new THREE.Color(config.palette.cloud),
-    flatShading: true,
     transparent: clouds.opacity < 1,
     opacity: clouds.opacity,
   });
@@ -149,7 +152,11 @@ export function buildCloudLayer(): THREE.Group {
     mesh.position.copy(direction).multiplyScalar(clouds.radius + random() * clouds.spread);
     mesh.quaternion.setFromUnitVectors(up, direction);
     mesh.rotateY(random() * Math.PI * 2);
-    mesh.scale.setScalar((0.028 + random() * 0.028) * clouds.scale);
+    const size = (0.03 + random() * 0.03) * clouds.scale;
+    // Чуть разной вытянутости: одинаковые силуэты выдают штамповку
+    mesh.scale.set(size * (0.9 + random() * 0.35), size * (0.75 + random() * 0.3), size);
+    // Тень от облака ползёт по земле — это и делает слой живым
+    mesh.castShadow = true;
     group.add(mesh);
   }
 

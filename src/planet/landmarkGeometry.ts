@@ -295,16 +295,32 @@ export function buildObservatory(unit: number, radius: number): THREE.Group {
     );
   }
 
-  // Купол из двух половин с проёмом между ними
+  // Купол из двух половин с проёмом между ними.
+  //
+  // Оболочка тонкая, и её изнанку надо рисовать: задние грани отсекаются, и
+  // сквозь проём была видна не внутренность купола, а дыра насквозь. Плюс
+  // тёмный пол под куполом — иначе через тот же проём просматривалась башня
+  // изнутри.
+  const shellMaterial = new THREE.MeshLambertMaterial({
+    color: new THREE.Color(config.palette.structureLight),
+    flatShading: true,
+    side: THREE.DoubleSide,
+  });
   for (const side of [-1, 1]) {
     const shell = new THREE.Mesh(
       new THREE.SphereGeometry(unit * 1.12, 20, 10, 0, Math.PI * 0.86, 0, Math.PI / 2),
-      light,
+      shellMaterial,
     );
     shell.rotation.y = side > 0 ? 0.12 : Math.PI + 0.12;
     shell.position.y = unit * 1.56;
     group.add(shell);
   }
+  const floor = new THREE.Mesh(
+    new THREE.CylinderGeometry(unit * 1.12, unit * 1.12, unit * 0.05, 20),
+    dark,
+  );
+  floor.position.y = unit * 1.55;
+  group.add(floor);
 
   // Труба телескопа смотрит в проём купола
   const tube = new THREE.Group();
