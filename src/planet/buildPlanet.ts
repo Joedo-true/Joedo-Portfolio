@@ -209,8 +209,28 @@ function buildPortals(
       .multiplyScalar(topRadius[tile] - config.portal.depth * 1.04);
     const rim = ring.map((point) => point.clone().lerp(centre, 0.06));
 
-    const positions: number[] = [];
+    let reach = 0;
+    for (const point of rim) reach = Math.max(reach, point.distanceTo(centre));
+
+    // Развёртка: диск в квадрате 0..1, серединой в (0.5, 0.5). По ней шейдер и
+    // считает полярные координаты воронки
     const normal = tiles[tile].center.clone();
+    const tangent = new THREE.Vector3(0, 0, 1).cross(normal);
+    if (tangent.lengthSq() < 1e-8) tangent.set(1, 0, 0).cross(normal);
+    tangent.normalize();
+    const bitangent = new THREE.Vector3().crossVectors(normal, tangent);
+
+    const offset = new THREE.Vector3();
+    const uvOf = (point: THREE.Vector3): [number, number] => {
+      offset.subVectors(point, centre);
+      return [
+        0.5 + (offset.dot(tangent) / reach) * 0.5,
+        0.5 + (offset.dot(bitangent) / reach) * 0.5,
+      ];
+    };
+
+    const positions: number[] = [];
+    const uvs: number[] = [];
     for (let k = 0; k < rim.length; k++) {
       const next = (k + 1) % rim.length;
       positions.push(
@@ -218,14 +238,13 @@ function buildPortals(
         rim[k].x, rim[k].y, rim[k].z,
         rim[next].x, rim[next].y, rim[next].z,
       );
+      uvs.push(0.5, 0.5, ...uvOf(rim[k]), ...uvOf(rim[next]));
     }
 
     const surface = new THREE.BufferGeometry();
     surface.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    surface.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     surface.computeVertexNormals();
-
-    let reach = 0;
-    for (const point of rim) reach = Math.max(reach, point.distanceTo(centre));
 
     portals.push({ name, tile, surface, centre, normal, reach, color, url });
   }

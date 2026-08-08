@@ -9,7 +9,7 @@ import {
   buildReactor,
   orientOnSphere,
 } from '../planet/landmarkGeometry';
-import { buildCloudLayer } from '../planet/props';
+import { buildCloudLayer, buildPortalMaterial } from '../planet/props';
 import { Birds } from './Birds';
 import { Flora } from './Flora';
 import { useAppStore } from '../state/useAppStore';
@@ -110,21 +110,12 @@ export function Planet({ data }: PlanetProps) {
   // Свет портала не зависит от солнца: он идёт изнутри, из колодца, куда
   // солнце и не достаёт
   const portals = useMemo(
-    () =>
-      data.portals.map((portal) => {
-        const base = new THREE.Color(portal.color);
-        return {
-          portal,
-          base,
-          material: new THREE.MeshBasicMaterial({
-            color: base.clone(),
-            side: THREE.DoubleSide,
-            toneMapped: false,
-          }),
-        };
-      }),
+    () => data.portals.map((portal) => ({ portal, material: buildPortalMaterial(portal.color) })),
     [data],
   );
+  /** Портал под указателем и текущая доля подсветки у каждого */
+  const hovered = useRef<string | null>(null);
+  const levels = useRef<Record<string, number>>({});
 
   useEffect(() => {
     return () => {
@@ -277,12 +268,22 @@ export function Planet({ data }: PlanetProps) {
       puffMaterial.opacity = 0.42 * Math.min(1, life * 5) * (1 - life);
     }
 
-    // Порталы дышат: ровный свет читается наклейкой, а не проходом
-    const breath = reduced
-      ? 1
-      : 1 + config.portal.pulse * Math.sin(time * config.portal.pulseHz * Math.PI * 2);
-    for (const { material: glow, base } of portals) {
-      glow.color.copy(base).multiplyScalar(breath);
+    // Воронки порталов. При «меньше движения» вихрь замирает на кадре, где он
+    // уже закручен, — портал остаётся порталом, но не крутится
+    const gate = config.portal;
+    const swirl = reduced ? 1.2 : state.clock.elapsedTime * gate.swirlSpeed * Math.PI * 2;
+    const breath = reduced ? 0 : gate.pulse * Math.sin(time * gate.pulseHz * Math.PI * 2);
+
+    for (const { portal, material: glow } of portals) {
+      // Подсветка нарастает и гаснет, а не щёлкает
+      const target = hovered.current === portal.name ? 1 : 0;
+      const level = THREE.MathUtils.damp(levels.current[portal.name] ?? 0, target, 14, step);
+      levels.current[portal.name] = level;
+
+      glow.uniforms.uTime.value = swirl;
+      glow.uniforms.uPulse.value = breath;
+      glow.uniforms.uTwist.value = gate.swirlTwist;
+      glow.uniforms.uHover.value = level * gate.hoverGlow;
     }
   });
 
@@ -353,10 +354,14 @@ export function Planet({ data }: PlanetProps) {
             if (useAppStore.getState().phase === 'idle') setPhase('zoomed');
           }}
           onPointerMove={(event) => {
-            if (rotation.current.dragging) return;
-            const overGate = portalUnder(event.ray) !== null;
+            if (rotation.current.dragging) {
+              hovered.current = null;
+              return;
+            }
+            const gate = portalUnder(event.ray);
+            hovered.current = gate ? gate.name : null;
             const zoomed = useAppStore.getState().phase === 'zoomed';
-            gl.domElement.style.cursor = overGate ? 'pointer' : zoomed ? 'grab' : 'pointer';
+            gl.domElement.style.cursor = gate ? 'pointer' : zoomed ? 'grab' : 'pointer';
           }}
           onPointerOver={() => {
             if (useAppStore.getState().phase === 'idle') {
@@ -364,6 +369,7 @@ export function Planet({ data }: PlanetProps) {
             }
           }}
           onPointerOut={() => {
+            hovered.current = null;
             if (useAppStore.getState().phase !== 'zoomed') gl.domElement.style.cursor = '';
           }}
         >

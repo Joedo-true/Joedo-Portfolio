@@ -161,6 +161,99 @@ export function buildCloudLayer(): THREE.Group {
   return group;
 }
 
+/**
+ * Материал портала: воронка из закрученных прожилок.
+ *
+ * Рисуется в полярных координатах диска. Спираль получается сдвигом угла на
+ * величину, растущую с радиусом: чем дальше от центра, тем сильнее поворот, и
+ * ровные волокна шума разъезжаются в вихрь. Шум берётся не по самому углу, а по
+ * точке на окружности этого угла — иначе на месте, где угол перескакивает через
+ * π, по всему диску шёл бы шов.
+ */
+export function buildPortalMaterial(color: string): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uColor: { value: new THREE.Color(color) },
+      uTime: { value: 0 },
+      uHover: { value: 0 },
+      uPulse: { value: 0 },
+      uTwist: { value: config.portal.swirlTwist },
+    },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uColor;
+      uniform float uTime;
+      uniform float uHover;
+      uniform float uPulse;
+      uniform float uTwist;
+      varying vec2 vUv;
+
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+          mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+          u.y
+        );
+      }
+
+      float fbm(vec2 p) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        for (int i = 0; i < 4; i++) {
+          value += amplitude * noise(p);
+          p *= 2.03;
+          amplitude *= 0.5;
+        }
+        return value;
+      }
+
+      void main() {
+        vec2 p = (vUv - 0.5) * 2.0;
+        float r = length(p);
+        if (r > 1.0) discard;
+
+        float angle = atan(p.y, p.x);
+        // Закрутка: угол уводит тем сильнее, чем дальше от центра
+        float twist = angle + uTime - r * uTwist;
+        vec2 q = vec2(cos(twist), sin(twist)) * (0.35 + r * 2.1);
+
+        float strands = fbm(q * 2.4 + vec2(uTime * 0.35, -uTime * 0.2));
+        float veins = smoothstep(0.34, 0.76, strands);
+
+        // Ядро горячее краёв, а у самой кромки идёт яркий обод
+        float core = pow(1.0 - r, 1.7);
+        float ring = smoothstep(0.55, 0.93, r) * (1.0 - smoothstep(0.93, 1.0, r));
+
+        float energy = (core * 0.75 + veins * 0.95 + ring * 1.15) * (1.0 + uPulse);
+        energy *= 1.0 + uHover;
+
+        // Белые нити поверх цвета — по ним воронка и читается плазмой
+        vec3 shade = uColor * energy + vec3(1.0) * pow(veins, 7.0) * (0.4 + uHover * 0.5);
+
+        float alpha = smoothstep(1.0, 0.88, r) * clamp(energy * 1.4, 0.0, 1.0);
+        gl_FragColor = vec4(shade, alpha);
+        #include <colorspace_fragment>
+      }
+    `,
+    side: THREE.DoubleSide,
+    transparent: true,
+    depthWrite: false,
+  });
+}
+
 /** Ореол атмосферы: свечение по краю диска, снаружи внутрь */
 export function buildAtmosphereMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({

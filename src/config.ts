@@ -172,6 +172,12 @@ export interface Config {
     pulse: number;
     /** Пульсаций в секунду */
     pulseHz: number;
+    /** Скорость закрутки воронки, оборотов в секунду */
+    swirlSpeed: number;
+    /** Насколько туго закручена спираль */
+    swirlTwist: number;
+    /** Насколько ярче портал под указателем */
+    hoverGlow: number;
   };
   /** Куда ведут порталы. Пусто — портал просто светится и никуда не ведёт */
   links: {
@@ -340,6 +346,9 @@ export const config: Config = {
     lift: 0.007,
     pulse: 0.16,
     pulseHz: 0.5,
+    swirlSpeed: 0.34,
+    swirlTwist: 3.4,
+    hoverGlow: 0.85,
   },
   links: {
     market: 'https://joedo-true.github.io/-sollers-shop/',
