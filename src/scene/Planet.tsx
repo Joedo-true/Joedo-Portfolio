@@ -159,14 +159,20 @@ export function Planet({ data }: PlanetProps) {
     const move = (event: PointerEvent) => {
       if (pointer !== event.pointerId) return;
       const { dragSensitivity } = config.camera;
-      const dx = (event.clientX - lastX) * dragSensitivity;
+      const state = rotation.current;
+
+      // Ни по одной оси предела нет: планету можно перевернуть и докрутить до
+      // любого места, включая полюса. Но собственная ось после переворота
+      // смотрит от зрителя, и та же тяга вправо уводила поверхность влево:
+      // видимое направление задаёт cos(наклона), и за полюсом он меняет знак.
+      // Гасим это, а не наклон — управление остаётся одинаковым в любом
+      // положении планеты
+      const facing = Math.cos(state.pitch) < 0 ? -1 : 1;
+      const dx = (event.clientX - lastX) * dragSensitivity * facing;
       const dy = (event.clientY - lastY) * dragSensitivity;
       lastX = event.clientX;
       lastY = event.clientY;
 
-      // Ни по одной оси предела нет: планету можно перевернуть и докрутить
-      // до любого места, включая полюса
-      const state = rotation.current;
       state.spin += dx;
       state.pitch += dy;
       // Инерция подхватывает последний рывок, а не средний за жест
